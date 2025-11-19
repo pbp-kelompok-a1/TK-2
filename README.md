@@ -52,15 +52,14 @@ ParaWorld adalah aplikasi berbasis web yang menghadirkan informasi seputar Paral
 
 ## 🔗 Sumber Dataset
 
-- [Paralympics 2024 Dataset (Kaggle)](https://www.kaggle.com/datasets/jaseemck/paralympics-2024/data)  
 - [Tokyo 2020 Paralympics Dataset (Kaggle)](https://www.kaggle.com/datasets/piterfm/tokyo-2020-paralympics)  
 
 ---
 
 ## 🌐 Tautan Deployment & Desain
 
-- **Deployment PWS**: 
-- **Link Desain**: 
+- **Link APK**: 
+- **Link Design (Figma)**: https://www.figma.com/design/yqei3c8chnYDVT8bl7F4dD/Design-Web-A1?node-id=28-3&t=T5QoflADc6s3ku5s-1 
 
 
 
