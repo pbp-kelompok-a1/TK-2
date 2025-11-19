@@ -5,6 +5,7 @@
 ParaWorld adalah aplikasi berbasis web yang menghadirkan informasi seputar Paralympic Games internasional, mulai dari profil atlet dunia, berita terbaru, hingga jadwal event penting. Aplikasi ini bertujuan untuk memperluas pengetahuan masyarakat tentang olahraga difabel serta menjadi wadah apresiasi terhadap perjuangan dan prestasi para atlet Paralympic.
 
 Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada konten berita, serta melihat detail profil atlet yang mencakup data pribadi, cabang olahraga, dan rangkaian prestasi yang pernah diraih. Selain itu, pengguna dapat mengikuti cabang olahraga tertentu melalui fitur following. Cabang olahraga yang diikuti akan diprioritaskan pada bagian fitur berita dan events, sehingga informasi yang relevan tampil lebih dulu. Konten lainnya tetap tersedia namun ditampilkan dengan prioritas yang lebih rendah.
+
 ---
 
 ## 📅 Fitur Unggulan
