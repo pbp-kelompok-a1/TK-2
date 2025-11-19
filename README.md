@@ -20,11 +20,18 @@ Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada ko
 
 ## ⚙️ Proses Integrasi
 
-- Data yang akan dikirim/diterima akan dalam bentuk JSON. Oleh karena itu, model dari object dibuat di sisi Flutter untuk memungkinkan validasi data dan function-function di sisi Django dirancang untuk mengirim JSON response.
-
-- Function-funtion di sisi Django dimapping dengan URL yang bersangkutan, lalu URL-URL tersebut dipanggil di sisi Flutter.
-
-- Selain pengiriman/penerimaan data seperti object News dan Events ke/dari sisi Django, sisi Flutter juga menerima cookie yang disimpan di CookieReuqest untuk memastikan para pengguna terautentikasi di seluruh halaman setelah mereka login.
+1. Backend (Django) sebagai Penyedia Data:
+- Logic yang sudah dibuat pada proyek web sebelumnya dimanfaatkan kembali.
+- Kita membuat view baru di Django yang mengembalikan respon dalam format JSON, bukan HTML.
+- URL endpoint didefinisikan di urls.py untuk diakses oleh aplikasi mobile.
+2. Pertukaran Data & Model (Flutter):
+- Flutter melakukan HTTP Request (GET untuk mengambil data, POST untuk mengirim data) ke URL endpoint Django yang telah dibuat.
+- Data JSON yang diterima dari Django akan dikonversi menjadi objek Dart menggunakan Model Class yang telah dibuat (bisa digenerate menggunakan Quicktype) agar tipe datanya terstruktur dan valid.
+3. Autentikasi & State Management:
+- Untuk menangani login dan logout, aplikasi menggunakan package/library pbp_django_auth (atau CookieRequest).
+- Library ini berfungsi menyimpan Cookie session dari Django secara lokal di aplikasi Flutter. Hal tersebut memastikan server tahu siapa user yang sedang aktif melakukan request tanpa perlu login ulang di setiap halaman.
+4. Tampilan Antarmuka (UI):
+- UI aplikasi dibangun secara dinamis menggunakan widget FutureBuilder (untuk data async) yang akan me-render tampilan berdasarkan data JSON yang berhasil diambil dari server.
 
 ---
 
