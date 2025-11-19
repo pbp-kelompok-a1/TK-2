@@ -53,9 +53,9 @@ Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada ko
 
 | Role | Hak Akses |
 |------|-----------|
-| **Admin** | Mengelola semua data dan konten: berita, komentar, profil atlet, event. CRUD penuh. |
-| **User Terautentikasi (Member)** | Mengakses detail atlet & berita, memberi komentar, bookmark, membuat & membalas forum, menandai event favorit. |
-| **User Tidak Terautentikasi (Guest)** | Melihat daftar atlet, berita, event, dan forum (read-only). Tidak bisa memberi komentar, membuat topik, atau melakukan bookmark. |
+| **Admin** | Memiliki kontrol penuh untuk mengelola seluruh data sistem, termasuk membuat dan memoderasi berita, event global, komentar, serta manajemen profil atlet dan akun pengguna secara menyeluruh. |
+| **User Terautentikasi (Member)** | Dapat mengakses detail lengkap profil atlet, membuat event komunitas, berinteraksi melalui komentar, serta mempersonalisasi konten berita dan event menggunakan fitur following. |
+| **User Tidak Terautentikasi (Guest)** | Hanya memiliki akses baca terbatas (read-only) untuk melihat berita, event umum, dan informasi dasar atlet tanpa fitur interaksi atau akses ke detail data mendalam. |
 
 ---
 
@@ -77,7 +77,7 @@ Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada ko
 
 ---
 
-## 🌐 Tautan Deployment & Desain
+## 🌐 Tautan APK & Design
 
 - **Link APK**: 
 - **Link Design (Figma)**: https://www.figma.com/design/yqei3c8chnYDVT8bl7F4dD/Design-Web-A1?node-id=28-3&t=T5QoflADc6s3ku5s-1 
