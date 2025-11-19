@@ -11,7 +11,7 @@ ParaWorld adalah aplikasi berbasis web yang menghadirkan informasi seputar Paral
 - 🌍 **Berita Global**: Update berita internasional tentang Paralympic Games, hasil pertandingan, dan tren olahraga difabel di seluruh dunia.  
 - 🏅 **Profil Atlet Dunia**: Informasi lengkap tentang atlet dari berbagai negara: biodata, cabang olahraga, prestasi, hingga riwayat medali.  
 - 📆 **Event & Jadwal**: Kalender pertandingan Paralympic, detail cabang olahraga, serta lokasi penyelenggaraan event global.  
-- 💬 **Forum Komunitas**: Wadah bagi pengguna dari berbagai negara untuk berdiskusi, berbagi opini, dan saling memberi dukungan kepada atlet Paralympic.  
+- 💬 **Comment**: Tempat bagi para pengguna dari berbagai negara untuk berdiskusi, berbagi opini, dan saling memberi dukungan kepada atlet Paralympic.  
 - ⭐ **Bookmark & Dukungan**: Simpan atlet atau berita favorit, serta beri dukungan dengan komentar atau tanda like.
 
 ---
