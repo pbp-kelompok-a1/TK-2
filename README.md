@@ -20,8 +20,10 @@ Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada ko
 
 ## ⚙️ Proses Integrasi
 
-**1.** Data yang akan dikirim/diterima akan dalam bentuk JSON. Oleh karena itu, model dari object dibuat di sisi Flutter untuk memungkinkan validasi data dan function-function di sisi Django dirancang untuk mengirim JSON response.\n
-**2.** Function-funtion di sisi Django dimapping dengan URL yang bersangkutan, lalu URL-URL tersebut dipanggil di sisi Flutter.\n
+**1.** Data yang akan dikirim/diterima akan dalam bentuk JSON. Oleh karena itu, model dari object dibuat di sisi Flutter untuk memungkinkan validasi data dan function-function di sisi Django dirancang untuk mengirim JSON response.
+
+**2.** Function-funtion di sisi Django dimapping dengan URL yang bersangkutan, lalu URL-URL tersebut dipanggil di sisi Flutter.
+
 **3.** Selain pengiriman/penerimaan data seperti object News dan Events ke/dari sisi Django, sisi Flutter juga menerima cookie yang disimpan di CookieReuqest untuk memastikan para pengguna terautentikasi di seluruh halaman setelah mereka login.
 
 ---
