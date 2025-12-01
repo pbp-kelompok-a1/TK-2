@@ -80,8 +80,15 @@ Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada ko
 ## 🌐 Tautan APK & Design
 
 - **Link APK**: 
-- **Link Design (Figma)**: https://www.figma.com/design/yqei3c8chnYDVT8bl7F4dD/Design-Web-A1?node-id=28-3&t=T5QoflADc6s3ku5s-1 
+- **Link Design (Figma)**: https://www.figma.com/design/yqei3c8chnYDVT8bl7F4dD/Design-Web-A1?node-id=28-3&t=T5QoflADc6s3ku5s-1
 
+--
+
+## Tautan Planning Kelompok
+
+- https://docs.google.com/spreadsheets/d/1TlfKbF008WlRihQfwOKttp3bL5nmnV653LTGLkguOJc/edit?gid=577760875#gid=577760875
+
+--
 
 
 
