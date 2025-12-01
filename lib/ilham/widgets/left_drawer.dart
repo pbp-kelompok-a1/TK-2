@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tk2/abi/screens/ProfilePage.dart';
 import 'package:tk2/ilham/screens/menu.dart';
 
 class LeftDrawer extends StatelessWidget {
@@ -43,7 +44,11 @@ class LeftDrawer extends StatelessWidget {
             leading: const Icon(Icons.person_outline),
             title: const Text("My Profile"),
             onTap: () {
-              // TODO
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfilePage(),
+                ));
             },
           ),
 
