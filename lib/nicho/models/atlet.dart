@@ -1,7 +1,3 @@
-// To parse this JSON data, do
-//
-//     final atletList = atletListFromJson(jsonString);
-
 import 'dart:convert';
 
 List<AtletList> atletListFromJson(String str) =>
@@ -14,7 +10,7 @@ class AtletList {
   int pk;
   String name;
   String shortName;
-  Discipline discipline;
+  String discipline;
   String country;
   bool isVisible;
   int goldCount;
@@ -38,8 +34,8 @@ class AtletList {
   factory AtletList.fromJson(Map<String, dynamic> json) => AtletList(
     pk: json["pk"],
     name: json["name"],
-    shortName: json["short_name"],
-    discipline: disciplineValues.map[json["discipline"]]!,
+    shortName: json["short_name"] ?? "",
+    discipline: json["discipline"] ?? "General",
     country: json["country"],
     isVisible: json["is_visible"],
     goldCount: json["gold_count"],
@@ -52,7 +48,7 @@ class AtletList {
     "pk": pk,
     "name": name,
     "short_name": shortName,
-    "discipline": disciplineValues.reverse[discipline],
+    "discipline": discipline,
     "country": country,
     "is_visible": isVisible,
     "gold_count": goldCount,
@@ -60,40 +56,4 @@ class AtletList {
     "bronze_count": bronzeCount,
     "total_medals": totalMedals,
   };
-}
-
-enum Discipline {
-  CYCLING_ROAD,
-  CYCLING_TRACK,
-  EQUESTRIAN,
-  OTHER,
-  POWERLIFTING,
-  SITTING_VOLLEYBALL,
-  SWIMMING,
-  TENNIS,
-  WHEELCHAIR_FENCING,
-}
-
-final disciplineValues = EnumValues({
-  "Cycling Road": Discipline.CYCLING_ROAD,
-  "Cycling Track": Discipline.CYCLING_TRACK,
-  "Equestrian": Discipline.EQUESTRIAN,
-  "Other": Discipline.OTHER,
-  "Powerlifting": Discipline.POWERLIFTING,
-  "Sitting Volleyball": Discipline.SITTING_VOLLEYBALL,
-  "Swimming": Discipline.SWIMMING,
-  "Tennis": Discipline.TENNIS,
-  "Wheelchair Fencing": Discipline.WHEELCHAIR_FENCING,
-});
-
-class EnumValues<T> {
-  Map<String, T> map;
-  late Map<T, String> reverseMap;
-
-  EnumValues(this.map);
-
-  Map<T, String> get reverse {
-    reverseMap = map.map((k, v) => MapEntry(v, k));
-    return reverseMap;
-  }
 }

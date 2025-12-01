@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tk2/abi/screens/ProfilePage.dart';
 import 'package:tk2/ilham/screens/menu.dart';
+import 'package:tk2/nicho/screens/atlet_page.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -20,11 +21,7 @@ class LeftDrawer extends StatelessWidget {
                 const CircleAvatar(
                   radius: 35,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.grey,
-                  ),
+                  child: Icon(Icons.person, size: 50, color: Colors.grey),
                 ),
                 const SizedBox(height: 10),
                 const Text(
@@ -39,25 +36,19 @@ class LeftDrawer extends StatelessWidget {
             ),
           ),
 
-           // My Profile 
+          // My Profile
           ListTile(
             leading: const Icon(Icons.person_outline),
             title: const Text("My Profile"),
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const ProfilePage(),
-                ));
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
             },
           ),
 
-          
-          const Divider(
-            height: 1,
-            thickness: 0.3,
-            color: Colors.black54,
-          ),
+          const Divider(height: 1, thickness: 0.3, color: Colors.black54),
 
           // MENU ITEMS
           ListTile(
@@ -65,10 +56,9 @@ class LeftDrawer extends StatelessWidget {
             title: const Text('Homepage'),
             onTap: () {
               Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyHomePage(),
-                  ));
+                context,
+                MaterialPageRoute(builder: (context) => const MyHomePage()),
+              );
             },
           ),
           ListTile(
@@ -79,10 +69,13 @@ class LeftDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.group_outlined),
-            title: const Text('Athletes'),
+            leading: const Icon(Icons.sports_handball),
+            title: const Text('List of Athletes'),
             onTap: () {
-              // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AtletPage()),
+              );
             },
           ),
           ListTile(
