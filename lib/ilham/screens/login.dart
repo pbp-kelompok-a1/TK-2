@@ -20,13 +20,15 @@ class _LoginPageParaWorldState extends State<LoginPageParaWorld> {
     final request = context.watch<CookieRequest>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), 
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
+      backgroundColor: const Color(0xFF38BDF8), 
+      body: Stack(
+        children: [
+          Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
               Column(
                 children: [
                   Container(
@@ -36,19 +38,20 @@ class _LoginPageParaWorldState extends State<LoginPageParaWorld> {
                       shape: BoxShape.circle,
                     ),
                     child: Image.asset(
-                      'assets/logo1.png',
+                      'assets/images/logo2.png',
                       width: 140,
                       height: 140,
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 24),
+
+                  const SizedBox(height: 20),
                   const Text(
                     "ParaWorld",
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 45,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Color(0xFFF5F1CE),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -79,6 +82,7 @@ class _LoginPageParaWorldState extends State<LoginPageParaWorld> {
                         controller: _usernameController,
                         decoration: InputDecoration(
                           labelText: 'Username',
+                          hintText: 'Enter your username',
                           labelStyle:
                               const TextStyle(color: Colors.black87),
                           border: OutlineInputBorder(
@@ -95,6 +99,7 @@ class _LoginPageParaWorldState extends State<LoginPageParaWorld> {
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Password',
+                          hintText: 'Enter your password',
                           labelStyle:
                               const TextStyle(color: Colors.black87),
                           border: OutlineInputBorder(
@@ -110,47 +115,53 @@ class _LoginPageParaWorldState extends State<LoginPageParaWorld> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () async {
-                            final username = _usernameController.text;
-                            final password = _passwordController.text;
+                            String username = _usernameController.text;
+                            String password = _passwordController.text;
 
                             final response = await request.login(
                               "http://localhost:8000/auth/login/",
                               {
-                                "username": username,
-                                "password": password,
+                                'username': username,
+                                'password': password,
                               },
                             );
 
                             if (request.loggedIn) {
-                              if (!mounted) return;
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const MyHomePage(),
-                                ),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "${response['message']} Welcome, ${response['username']}."),
-                                ),
-                              );
+                              String message = response['message'];
+                              String uname = response['username'];
+                              if (context.mounted) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const MyHomePage(),
+                                  ),
+                                );
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      content: Text("$message Welcome, $uname."),
+                                    ),
+                                  );
+                              }
                             } else {
-                              if (!mounted) return;
-                              showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('Login Failed'),
-                                  content: Text(response['message']),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context),
-                                      child: const Text('OK'),
-                                    )
-                                  ],
-                                ),
-                              );
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Login Failed'),
+                                    content: Text(response['message']),
+                                    actions: [
+                                      TextButton(
+                                        child: const Text('OK'),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -201,6 +212,24 @@ class _LoginPageParaWorldState extends State<LoginPageParaWorld> {
             ],
           ),
         ),
+      ),
+          Positioned(
+            top: 40,
+            left: 16,
+            child: SafeArea(
+              child: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

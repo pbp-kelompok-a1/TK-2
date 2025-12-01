@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tk2/ilham/screens/menu.dart';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,7 +13,12 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return Provider(
+      create: (_) {
+        CookieRequest request = CookieRequest();
+        return request;
+      },
+    child: MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
         // This is the theme of your application.
@@ -37,13 +44,12 @@ class MyApp extends StatelessWidget {
           onSecondary: Colors.white,
           error: Colors.red,
           onError: Colors.white,
-          background: Colors.white,
-          onBackground: Colors.black,
           surface: Colors.white,
           onSurface: Colors.black,
         ),
       ),
       home: const MyHomePage(),
+    )
     );
   }
 }
