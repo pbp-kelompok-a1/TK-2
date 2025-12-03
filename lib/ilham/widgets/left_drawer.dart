@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tk2/abi/screens/ProfilePage.dart';
 import 'package:tk2/ilham/screens/menu.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
+import 'package:tk2/bayu/screens/event_page.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -83,6 +84,10 @@ class LeftDrawer extends StatelessWidget {
             title: const Text('Events'),
             onTap: () {
               // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EventPage()),
+              );
             },
           ),
         ],
