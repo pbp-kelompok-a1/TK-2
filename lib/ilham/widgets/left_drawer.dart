@@ -3,6 +3,7 @@ import 'package:tk2/abi/screens/ProfilePage.dart';
 import 'package:tk2/ilham/screens/menu.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 import 'package:tk2/bayu/screens/event_page.dart';
+import 'package:tk2/delila/screens/news_entry_list.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -66,7 +67,12 @@ class LeftDrawer extends StatelessWidget {
             leading: const Icon(Icons.article_outlined),
             title: const Text('News'),
             onTap: () {
-              // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NewsEntryListPage(),
+                ),
+              );
             },
           ),
           ListTile(
