@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tk2/ilham/screens/menu.dart';
-import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,7 +10,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return Provider(
@@ -36,6 +35,9 @@ class MyApp extends StatelessWidget {
           //
           // This works for code too, not just values: Most code changes can be
           // tested with just a hot reload.
+          
+          // Pakai Material 3 agar UI lebih modern
+          useMaterial3: true,
           colorScheme: const ColorScheme(
             brightness: Brightness.light,
             primary: Color(0xFF82BFDB),

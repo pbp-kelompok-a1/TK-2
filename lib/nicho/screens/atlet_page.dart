@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:tk2/nicho/models/atlet.dart';
+import 'package:tk2/nicho/screens/detail_atlet_page.dart';
 
 class AtletPage extends StatefulWidget {
   const AtletPage({Key? key}) : super(key: key);
@@ -71,8 +72,27 @@ class _AtletPageState extends State<AtletPage> {
                       ),
                     ),
                     onTap: () {
-                      // navigasi ke detail di sini, soon
-                      print("Klik atlet: ${item.name}");
+                      // Logic Guest vs Member
+                      if (request.loggedIn) {
+                        // Jika sudah login, ke halaman detail
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DetailAtletPage(id: item.pk, name: item.name),
+                          ),
+                        );
+                      } else {
+                        // Jika belum login (Guest), tampilkan pesan
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Anda harus login untuk melihat detail atlet!",
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     },
                   ),
                 );

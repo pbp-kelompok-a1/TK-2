@@ -95,6 +95,10 @@ class LeftDrawer extends StatelessWidget {
             leading: const Icon(Icons.sports_handball),
             title: const Text('List of Athletes'),
             onTap: () {
+              // Tutup drawer dulu
+              Navigator.pop(context);
+
+              // Baru pindah ke halaman list atlet
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AtletPage()),
