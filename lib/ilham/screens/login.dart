@@ -4,14 +4,14 @@ import 'package:provider/provider.dart';
 import 'package:tk2/ilham/screens/register.dart';
 import 'package:tk2/ilham/screens/menu.dart';
 
-class LoginPageParaWorld extends StatefulWidget {
-  const LoginPageParaWorld({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<LoginPageParaWorld> createState() => _LoginPageParaWorldState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageParaWorldState extends State<LoginPageParaWorld> {
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 

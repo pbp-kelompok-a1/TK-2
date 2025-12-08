@@ -4,6 +4,9 @@ import 'package:tk2/ilham/screens/menu.dart';
 import 'package:tk2/ilham/screens/login.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:tk2/nicho/screens/atlet_page.dart';
+import 'package:tk2/bayu/screens/event_page.dart';
+import 'package:tk2/ilham/screens/test_comment.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -23,11 +26,7 @@ class LeftDrawer extends StatelessWidget {
                 const CircleAvatar(
                   radius: 35,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.grey,
-                  ),
+                  child: Icon(Icons.person, size: 50, color: Colors.grey),
                 ),
                 const SizedBox(height: 10),
                 const Text(
@@ -49,7 +48,7 @@ class LeftDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const LoginPageParaWorld()),
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
                 );
               },
             ),
@@ -61,9 +60,8 @@ class LeftDrawer extends StatelessWidget {
             onTap: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const ProfilePage(),
-                ));
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
             },
           ),
           ],
@@ -74,16 +72,16 @@ class LeftDrawer extends StatelessWidget {
             color: Colors.black54,
           ),
 
+
           // MENU ITEMS
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text('Homepage'),
             onTap: () {
               Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyHomePage(),
-                  ));
+                context,
+                MaterialPageRoute(builder: (context) => const MyHomePage()),
+              );
             },
           ),
           ListTile(
@@ -94,10 +92,13 @@ class LeftDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.group_outlined),
-            title: const Text('Athletes'),
+            leading: const Icon(Icons.sports_handball),
+            title: const Text('List of Athletes'),
             onTap: () {
-              // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AtletPage()),
+              );
             },
           ),
           ListTile(
@@ -105,6 +106,10 @@ class LeftDrawer extends StatelessWidget {
             title: const Text('Events'),
             onTap: () {
               // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EventPage()),
+              );
             },
           ),
 
@@ -128,7 +133,7 @@ class LeftDrawer extends StatelessWidget {
                 // Refresh halaman lebih dulu agar Drawer rebuild (logout → login)
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => const LoginPageParaWorld()),
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
                 );
 
                 // Setelah rebuild selesai baru tampilkan snackbar
@@ -142,6 +147,18 @@ class LeftDrawer extends StatelessWidget {
               },
             ),
           ],
+          ListTile(
+            leading: const Icon(Icons.comment_outlined),
+            title: const Text('test comment'),
+            onTap: () {
+              // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CommentTestScreen()),
+              );
+            },
+          ),
+
         ],
       ),
     );

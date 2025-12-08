@@ -170,7 +170,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => const LoginPageParaWorld(),
+                                        builder: (_) => const LoginPage(),
                                       ),
                                     );
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -209,7 +209,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const LoginPageParaWorld(),
+                                  builder: (_) => const LoginPage(),
                                 ),
                               );
                             },
