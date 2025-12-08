@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 import 'package:tk2/bayu/screens/event_page.dart';
-import 'package:tk2/ilham/screens/test_comment.dart';
+// import 'package:tk2/ilham/screens/test_comment.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -53,25 +53,20 @@ class LeftDrawer extends StatelessWidget {
               },
             ),
           ] else ...[
-          // My Profile 
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text("My Profile"),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfilePage()),
-              );
-            },
-          ),
+            // My Profile
+            ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text("My Profile"),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                );
+              },
+            ),
           ],
 
-          const Divider(
-            height: 1,
-            thickness: 0.3,
-            color: Colors.black54,
-          ),
-
+          const Divider(height: 1, thickness: 0.3, color: Colors.black54),
 
           // MENU ITEMS
           ListTile(
@@ -118,19 +113,16 @@ class LeftDrawer extends StatelessWidget {
           ),
 
           if (Provider.of<CookieRequest>(context, listen: false).loggedIn) ...[
-            const Divider(
-              height: 1,
-              thickness: 0.3,
-              color: Colors.black54,
-            ),
-            
+            const Divider(height: 1, thickness: 0.3, color: Colors.black54),
+
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                await Provider.of<CookieRequest>(context, listen: false).logout(
-                  "http://localhost:8000/auth/logout/",
-                );
+                await Provider.of<CookieRequest>(
+                  context,
+                  listen: false,
+                ).logout("http://localhost:8000/auth/logout/");
 
                 if (!context.mounted) return;
 
@@ -143,26 +135,25 @@ class LeftDrawer extends StatelessWidget {
                 // Setelah rebuild selesai baru tampilkan snackbar
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Logout berhasil!"),
-                    ),
+                    const SnackBar(content: Text("Logout berhasil!")),
                   );
                 });
               },
             ),
           ],
-          ListTile(
-            leading: const Icon(Icons.comment_outlined),
-            title: const Text('test comment'),
-            onTap: () {
-              // TODO
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CommentTestScreen()),
-              );
-            },
-          ),
-
+          // ListTile(
+          //   leading: const Icon(Icons.comment_outlined),
+          //   title: const Text('test comment'),
+          //   onTap: () {
+          //     // TODO
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (context) => const CommentTestScreen(),
+          //       ),
+          //     );
+          //   },
+          // ),
         ],
       ),
     );

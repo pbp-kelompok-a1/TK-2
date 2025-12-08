@@ -57,19 +57,47 @@ class _AtletPageState extends State<AtletPage> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text("${item.country} - ${item.discipline}"),
-                    trailing: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        "${item.totalMedals} 🏅",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Total Medali
+                        Text(
+                          "${item.totalMedals} Medals",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        // Row untuk Gold, Silver, Bronze
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (item.goldCount > 0) ...[
+                              const Text("🥇"),
+                              Text(
+                                "${item.goldCount} ",
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                            if (item.silverCount > 0) ...[
+                              const Text("🥈"),
+                              Text(
+                                "${item.silverCount} ",
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                            if (item.bronzeCount > 0) ...[
+                              const Text("🥉"),
+                              Text(
+                                "${item.bronzeCount} ",
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
                     ),
                     onTap: () {
                       // Logic Guest vs Member
