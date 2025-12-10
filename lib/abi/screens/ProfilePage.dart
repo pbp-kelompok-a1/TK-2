@@ -7,6 +7,8 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../../ilham/widgets/left_drawer.dart';
 import '../../ilham/widgets/navbar.dart';
+import '../models/CabangOlahraga.dart';
+import '../models/Following.dart';
 
 class ProfilePage extends StatefulWidget {
   final int? userId;
@@ -21,25 +23,19 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   bool _isEditMode = false;
 
-  // User data
   String _displayName = "";
   String _username = "";
   String? _profilePictureUrl;
   DateTime? _joinDate;
 
-  // Stats
   int _followingCount = 0;
   int _commentCount = 0;
   int _eventCount = 0;
 
-  // Following sports
-  List<FollowingSport> _followingList = [];
-  List<CabangOlahraga> _availableSports = [];
-
-  // Recent activity
+  List<FollowingElement> _followingList = [];
+  List<CabangOlahragaElement> _availableSports = [];
   List<RecentActivity> _recentActivity = [];
 
-  // Controllers
   final TextEditingController _nameController = TextEditingController();
   Uint8List? _selectedImageBytes;
   final ImagePicker _picker = ImagePicker();
@@ -73,7 +69,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final request = context.read<CookieRequest>();
 
     try {
-      // Get profile data from Django API endpoint
       final response = await request.get(
         'http://localhost:8000/following/profile2/',
       );
@@ -89,26 +84,22 @@ class _ProfilePageState extends State<ProfilePage> {
           _commentCount = response['commentCount'] ?? 0;
           _eventCount = response['eventCount'] ?? 0;
 
-          // Parse join date if available
           if (response['join_date'] != null) {
             _joinDate = DateTime.parse(response['join_date']);
           }
 
-          // Parse following list
           if (response['following'] != null) {
             _followingList = (response['following'] as List)
-                .map((f) => FollowingSport.fromJson(f))
+                .map((f) => FollowingElement.fromJson(f))
                 .toList();
           }
 
-          // Parse available sports for dropdown
           if (response['available_sports'] != null) {
             _availableSports = (response['available_sports'] as List)
-                .map((s) => CabangOlahraga.fromJson(s))
+                .map((s) => CabangOlahragaElement.fromJson(s))
                 .toList();
           }
 
-          // Parse recent activity
           if (response['recentActivity'] != null) {
             _recentActivity = (response['recentActivity'] as List)
                 .map((a) => RecentActivity.fromJson(a))
@@ -206,14 +197,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     if (image != null) {
-      // Read bytes immediately. This works on Web and Mobile.
       final Uint8List bytes = await image.readAsBytes();
 
       setState(() {
         _selectedImageBytes = bytes;
       });
 
-      // Auto-save after picking image
       await _updateProfile();
     }
   }
@@ -306,7 +295,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if we're in mobile layout (portrait orientation)
     final isMobile = MediaQuery.of(context).size.width < 900;
 
     return Scaffold(
@@ -334,13 +322,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   : Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Main Content (Profile Card)
                   Expanded(
                     flex: 2,
                     child: _buildProfileCard(),
                   ),
                   const SizedBox(width: 20),
-                  // Sidebar
                   Expanded(
                     flex: 1,
                     child: _buildSidebarCard(),
@@ -602,15 +588,20 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSportChip(FollowingSport follow) {
+  Widget _buildSportChip(FollowingElement follow) {
+    final sport = _availableSports.firstWhere(
+          (s) => s.id == follow.cabangOlahraga,
+      orElse: () => CabangOlahragaElement(id: '', name: 'Unknown Sport'),
+    );
+
     return Chip(
       backgroundColor: const Color(0xFF38BDF8),
       deleteIconColor: Colors.white,
       label: Text(
-        follow.sportName,
+        sport.name,
         style: const TextStyle(color: Colors.white),
       ),
-      onDeleted: () => _unfollowSport(follow.id, follow.sportName),
+      onDeleted: () => _unfollowSport(follow.id, sport.name),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -822,47 +813,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return '${_joinDate!.day} ${months[_joinDate!.month - 1]} ${_joinDate!.year}';
   }
 }
-
-// Supporting Models
-class FollowingSport {
-  final String id;
-  final String sportId;
-  final String sportName;
-
-  FollowingSport({
-    required this.id,
-    required this.sportId,
-    required this.sportName,
-  });
-
-  factory FollowingSport.fromJson(Map<String, dynamic> json) {
-    return FollowingSport(
-      id: json['id'].toString(),
-      sportId: json['cabangOlahraga']?.toString() ?? '',
-      sportName: json['cabangOlahraga__name']?.toString() ??
-          json['sport_name']?.toString() ??
-          'Unknown Sport',
-    );
-  }
-}
-
-class CabangOlahraga {
-  final String id;
-  final String name;
-
-  CabangOlahraga({
-    required this.id,
-    required this.name,
-  });
-
-  factory CabangOlahraga.fromJson(Map<String, dynamic> json) {
-    return CabangOlahraga(
-      id: json['id'].toString(),
-      name: json['name'].toString(),
-    );
-  }
-}
-
 class RecentActivity {
   final String type;
   final String description;
