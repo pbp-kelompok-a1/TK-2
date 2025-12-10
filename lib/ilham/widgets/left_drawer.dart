@@ -57,10 +57,12 @@ class LeftDrawer extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text("My Profile"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(),
+                  ),
                 );
               },
             ),

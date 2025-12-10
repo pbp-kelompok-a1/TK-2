@@ -1,14 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:convert';
 import '../../ilham/widgets/left_drawer.dart';
 import '../../ilham/widgets/navbar.dart';
-import '../models/CustomUser.dart';
-import '../models/Following.dart';
-import '../models/CabangOlahraga.dart';
 
 class ProfilePage extends StatefulWidget {
   final int? userId;
@@ -24,33 +22,31 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isEditMode = false;
 
   // User data
-  int? _userId;
-  CustomUserElement? _currentUser;
   String _displayName = "";
   String _username = "";
   String? _profilePictureUrl;
+  DateTime? _joinDate;
 
   // Stats
   int _followingCount = 0;
   int _commentCount = 0;
   int _eventCount = 0;
 
-  // Following
-  List<FollowingElement> _followingList = [];
-  List<CabangOlahragaElement> _availableSports = [];
+  // Following sports
+  List<FollowingSport> _followingList = [];
+  List<CabangOlahraga> _availableSports = [];
 
   // Recent activity
-  List<Map<String, dynamic>> _recentActivity = [];
+  List<RecentActivity> _recentActivity = [];
 
   // Controllers
   final TextEditingController _nameController = TextEditingController();
-  File? _selectedImage;
+  Uint8List? _selectedImageBytes;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    _userId = widget.userId;
     _loadProfileData();
   }
 
@@ -60,72 +56,77 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  String? _getValidImageUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('http')) return path;
+
+    const String baseUrl = 'http://localhost:8000';
+    if (path.startsWith('/')) {
+      return '$baseUrl$path';
+    }
+    return '$baseUrl/$path';
+  }
+
   Future<void> _loadProfileData() async {
     setState(() => _isLoading = true);
 
     final request = context.read<CookieRequest>();
 
     try {
-      // First, get current logged-in user info
-      if (_userId == null) {
-        final currentUserResponse = await request.get(
-            'http://127.0.0.1:8000/following/currentUser/'
-        );
+      // Get profile data from Django API endpoint
+      final response = await request.get(
+        'http://localhost:8000/following/profile2/',
+      );
 
-        print('DEBUG: Current User Response: $currentUserResponse');
+      print('DEBUG: Profile Response: $response');
 
-        if (currentUserResponse['user_id'] != null) {
-          _userId = currentUserResponse['user_id'];
-          _displayName = currentUserResponse['name'] ?? '';
-          _username = currentUserResponse['username'] ?? '';
-          _profilePictureUrl = currentUserResponse['picture'];
+      if (response != null && response['success'] == true) {
+        setState(() {
+          _displayName = response['name'] ?? '';
+          _username = response['username'] ?? '';
+          _profilePictureUrl = response['profilePicture'];
+          _followingCount = response['followingCount'] ?? 0;
+          _commentCount = response['commentCount'] ?? 0;
+          _eventCount = response['eventCount'] ?? 0;
+
+          // Parse join date if available
+          if (response['join_date'] != null) {
+            _joinDate = DateTime.parse(response['join_date']);
+          }
+
+          // Parse following list
+          if (response['following'] != null) {
+            _followingList = (response['following'] as List)
+                .map((f) => FollowingSport.fromJson(f))
+                .toList();
+          }
+
+          // Parse available sports for dropdown
+          if (response['available_sports'] != null) {
+            _availableSports = (response['available_sports'] as List)
+                .map((s) => CabangOlahraga.fromJson(s))
+                .toList();
+          }
+
+          // Parse recent activity
+          if (response['recentActivity'] != null) {
+            _recentActivity = (response['recentActivity'] as List)
+                .map((a) => RecentActivity.fromJson(a))
+                .toList();
+          }
+
           _nameController.text = _displayName;
-
-          print('DEBUG: Loaded current user - ID: $_userId, Name: $_displayName');
-        } else {
-          throw Exception('Could not get current user information');
-        }
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load profile data');
       }
-
-      // Load following data
-      final followingResponse = await request.get(
-          'http://127.0.0.1:8000/following/showJSONFollowing/'
-      );
-
-      print('DEBUG: Following Response: $followingResponse');
-
-      final followingData = Following.fromJson(followingResponse);
-      _followingList = followingData.followings
-          .where((f) => f.user == _userId)
-          .toList();
-      _followingCount = _followingList.length;
-
-      print('DEBUG: Following count: $_followingCount');
-
-      // Load available sports for dropdown
-      final sportsResponse = await request.get(
-          'http://127.0.0.1:8000/following/showJSONCabangOlahraga/'
-      );
-
-      final sportsData = CabangOlahraga.fromJson(sportsResponse);
-      final followingIds = _followingList.map((f) => f.cabangOlahraga).toSet();
-      _availableSports = sportsData.cabangOlahraga
-          .where((sport) => !followingIds.contains(sport.id))
-          .toList();
-
-      print('DEBUG: Available sports count: ${_availableSports.length}');
-
-      _commentCount = 0;
-      _eventCount = 0;
-      _recentActivity = [];
-
-      setState(() => _isLoading = false);
-
     } catch (e, stackTrace) {
       print('DEBUG: Error loading profile: $e');
       print('DEBUG: Stack trace: $stackTrace');
 
       setState(() => _isLoading = false);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -142,31 +143,33 @@ class _ProfilePageState extends State<ProfilePage> {
     final request = context.read<CookieRequest>();
 
     try {
-      final formData = {
+      final formData = <String, dynamic>{
         'name': _nameController.text.trim(),
         'update_profile': 'true',
       };
 
-      // If image is selected, convert to base64
-      if (_selectedImage != null) {
-        final bytes = await _selectedImage!.readAsBytes();
-        final base64Image = base64Encode(bytes);
-        formData['picture'] = base64Image;
+      if (_selectedImageBytes != null) {
+        final base64Image = base64Encode(_selectedImageBytes!);
+        formData['picture'] = 'data:image/jpeg;base64,$base64Image';
       }
 
       final response = await request.post(
-        'http://127.0.0.1:8000/following/profile/$_userId',
+        'http://localhost:8000/following/profile2/',
         formData,
       );
+
+      print('DEBUG: Update response: $response');
+
+      if (!mounted) return;
 
       if (response['success'] == true) {
         setState(() {
           _displayName = response['data']['name'];
           if (response['data']['picture'] != null) {
             _profilePictureUrl = response['data']['picture'];
+            _selectedImageBytes = null;
           }
           _isEditMode = false;
-          _selectedImage = null;
         });
 
         if (mounted) {
@@ -180,8 +183,9 @@ class _ProfilePageState extends State<ProfilePage> {
       } else {
         throw Exception(response['error'] ?? 'Failed to update profile');
       }
-
     } catch (e) {
+      print('DEBUG: Update error: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -202,9 +206,15 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     if (image != null) {
+      // Read bytes immediately. This works on Web and Mobile.
+      final Uint8List bytes = await image.readAsBytes();
+
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedImageBytes = bytes;
       });
+
+      // Auto-save after picking image
+      await _updateProfile();
     }
   }
 
@@ -213,7 +223,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       final response = await request.post(
-        'http://127.0.0.1:8000/following/profile/$_userId',
+        'http://localhost:8000/following/profile2/',
         {'cabangOlahraga': sportId},
       );
 
@@ -266,7 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       final response = await request.post(
-        'http://127.0.0.1:8000/following/unfollow/$followId/',
+        'http://localhost:8000/following/unfollow2/$followId/',
         {},
       );
 
@@ -296,46 +306,75 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if we're in mobile layout (portrait orientation)
+    final isMobile = MediaQuery.of(context).size.width < 900;
+
     return Scaffold(
       drawer: const LeftDrawer(),
       appBar: const MainNavbar(),
+      backgroundColor: Colors.grey[50],
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 1400),
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          child: Column(
-            children: [
-              // Profile Card
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(30),
-                  child: Column(
-                    children: [
-                      _buildProfileHeader(),
-                      const SizedBox(height: 30),
-                      _buildStats(),
-                      const SizedBox(height: 40),
-                      _buildFollowingSports(),
-                      const SizedBox(height: 20),
-                      _buildAddSportForm(),
-                      const SizedBox(height: 40),
-                      _buildRecentActivity(),
-                    ],
+          : RefreshIndicator(
+        onRefresh: _loadProfileData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 1400),
+              margin: const EdgeInsets.all(20),
+              child: isMobile
+                  ? Column(
+                children: [
+                  _buildProfileCard(),
+                  const SizedBox(height: 20),
+                  _buildSidebarCard(),
+                ],
+              )
+                  : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Main Content (Profile Card)
+                  Expanded(
+                    flex: 2,
+                    child: _buildProfileCard(),
                   ),
-                ),
+                  const SizedBox(width: 20),
+                  // Sidebar
+                  Expanded(
+                    flex: 1,
+                    child: _buildSidebarCard(),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-
-              // User Info Sidebar
-              _buildUserInfoCard(),
-            ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildProfileHeader(),
+            const SizedBox(height: 30),
+            _buildStats(),
+            const SizedBox(height: 40),
+            _buildFollowingSports(),
+            const SizedBox(height: 20),
+            _buildAddSportForm(),
+            const SizedBox(height: 40),
+            _buildRecentActivity(),
+          ],
         ),
       ),
     );
@@ -346,38 +385,38 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         // Profile Picture
         GestureDetector(
-          onTap: _isEditMode ? _pickImage : null,
+          onTap: _pickImage,
           child: Stack(
             children: [
               CircleAvatar(
                 radius: 60,
                 backgroundColor: const Color(0xFFE5E0DA),
-                backgroundImage: _selectedImage != null
-                    ? FileImage(_selectedImage!)
-                    : (_profilePictureUrl != null
-                    ? NetworkImage(_profilePictureUrl!)
+                backgroundImage: _selectedImageBytes != null
+                    ? MemoryImage(_selectedImageBytes!)
+                    : (_getValidImageUrl(_profilePictureUrl) != null
+                    ? NetworkImage(_getValidImageUrl(_profilePictureUrl)!)
                     : null) as ImageProvider?,
-                child: _profilePictureUrl == null && _selectedImage == null
+                child: _profilePictureUrl == null && _selectedImageBytes == null
                     ? const Icon(Icons.person, size: 60, color: Colors.grey)
                     : null,
               ),
-              if (_isEditMode)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF38BDF8),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 16,
                   ),
                 ),
+              ),
             ],
           ),
         ),
@@ -454,7 +493,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ElevatedButton(
                       onPressed: () => setState(() {
                         _isEditMode = false;
-                        _selectedImage = null;
+                        _selectedImageBytes = null;
                         _nameController.text = _displayName;
                       }),
                       style: ElevatedButton.styleFrom(
@@ -542,7 +581,17 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 20),
-        Wrap(
+        _followingList.isEmpty
+            ? const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Text(
+              'No sports followed yet',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+        )
+            : Wrap(
           spacing: 10,
           runSpacing: 10,
           children: _followingList.map((follow) {
@@ -553,30 +602,15 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSportChip(FollowingElement follow) {
-    // Find sport name from available sports or following list
-    String sportName = follow.cabangOlahraga;
-
+  Widget _buildSportChip(FollowingSport follow) {
     return Chip(
       backgroundColor: const Color(0xFF38BDF8),
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            sportName,
-            style: const TextStyle(color: Colors.white),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _unfollowSport(follow.id, sportName),
-            child: const Icon(
-              Icons.close,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-        ],
+      deleteIconColor: Colors.white,
+      label: Text(
+        follow.sportName,
+        style: const TextStyle(color: Colors.white),
       ),
+      onDeleted: () => _unfollowSport(follow.id, follow.sportName),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
@@ -654,20 +688,50 @@ class _ProfilePageState extends State<ProfilePage> {
           )
         else
           ..._recentActivity.map((activity) {
-            return ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFF38BDF8),
-                radius: 4,
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade200),
+                ),
               ),
-              title: Text(activity['description'] ?? ''),
-              subtitle: Text(activity['date'] ?? ''),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF38BDF8),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: '@$_username ',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          TextSpan(text: activity.description),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           }).toList(),
       ],
     );
   }
 
-  Widget _buildUserInfoCard() {
+  Widget _buildSidebarCard() {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -686,19 +750,14 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 20),
-            _buildInfoRow(
-              'Joined',
-              _currentUser?.joinDate != null
-                  ? '${_currentUser!.joinDate.day} ${_getMonthName(_currentUser!.joinDate.month)} ${_currentUser!.joinDate.year}'
-                  : '-',
-            ),
+            _buildInfoRow('Joined', _formatJoinDate()),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
                   final request = context.read<CookieRequest>();
-                  await request.logout('http://127.0.0.1:8000/auth/logout/');
+                  await request.logout('http://localhost:8000/auth/logout/');
 
                   if (mounted) {
                     Navigator.of(context).pushNamedAndRemoveUntil(
@@ -738,21 +797,95 @@ class _ProfilePageState extends State<ProfilePage> {
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             color: Colors.black87,
+            fontSize: 14,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(color: Colors.black87),
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 14,
+          ),
         ),
       ],
     );
   }
 
-  String _getMonthName(int month) {
+  String _formatJoinDate() {
+    if (_joinDate == null) return '-';
+
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return months[month - 1];
+
+    return '${_joinDate!.day} ${months[_joinDate!.month - 1]} ${_joinDate!.year}';
+  }
+}
+
+// Supporting Models
+class FollowingSport {
+  final String id;
+  final String sportId;
+  final String sportName;
+
+  FollowingSport({
+    required this.id,
+    required this.sportId,
+    required this.sportName,
+  });
+
+  factory FollowingSport.fromJson(Map<String, dynamic> json) {
+    return FollowingSport(
+      id: json['id'].toString(),
+      sportId: json['cabangOlahraga']?.toString() ?? '',
+      sportName: json['cabangOlahraga__name']?.toString() ??
+          json['sport_name']?.toString() ??
+          'Unknown Sport',
+    );
+  }
+}
+
+class CabangOlahraga {
+  final String id;
+  final String name;
+
+  CabangOlahraga({
+    required this.id,
+    required this.name,
+  });
+
+  factory CabangOlahraga.fromJson(Map<String, dynamic> json) {
+    return CabangOlahraga(
+      id: json['id'].toString(),
+      name: json['name'].toString(),
+    );
+  }
+}
+
+class RecentActivity {
+  final String type;
+  final String description;
+  final String date;
+
+  RecentActivity({
+    required this.type,
+    required this.description,
+    required this.date,
+  });
+
+  factory RecentActivity.fromJson(Map<String, dynamic> json) {
+    String desc = '';
+    if (json['type'] == 'Event') {
+      desc = 'posted an event: ${json['description']}';
+    } else if (json['type'] == 'Comment') {
+      desc = 'made a comment';
+    }
+
+    return RecentActivity(
+      type: json['type'].toString(),
+      description: desc,
+      date: json['date'].toString(),
+    );
   }
 }
