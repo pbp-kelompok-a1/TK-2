@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 
 import '../../ilham/widgets/left_drawer.dart';
 import '../../ilham/widgets/navbar.dart';
 import '../models/events.dart';
+import '../screens/event_form.dart';
 
 
 class EventPage extends StatefulWidget {
@@ -13,73 +16,79 @@ class EventPage extends StatefulWidget {
 }
 
 class _EventPageState extends State<EventPage> {
-  // MASIH HARDCODE, BLOM TERINTEGRASI DENGAN DJANGO
-  final List<Events> _dummyEvents = [
-    Events(
-      id: "1",
-      title: "Roland Garros",
-      description: "The French Open, also known as Roland-Garros...",
-      sportBranch: "Tennis",
-      location: "Paris, France",
-      pictureUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/8/82/Roland-Garros_Logo.svg/1200px-Roland-Garros_Logo.svg.png",
-      startTime: DateTime(2025, 12, 10, 2, 55),
-      endTime: null,
-      eventType: "Community",
-      creator: 1,
-      cabangOlahraga: "Tennis",
-      createdAt: DateTime.now(),
-    ),
-
-    Events(
-      id: "2",
-      title: "Wimbledon",
-      description: "UK straweberyy cream",
-      sportBranch: "Tennis",
-      location: "wimbledon",
-      pictureUrl: "", // tes kosongan
-      startTime: DateTime(2026, 06, 15, 14, 00),
-      endTime: null,
-      eventType: "Global",
-      creator: 2,
-      cabangOlahraga: "Football",
-      createdAt: DateTime.now(),
-    ),
-  ];
-
   String _selectedFilter = "All Events";
+
+  Future<List<Events>> fetchEvents(CookieRequest request) async {
+    final response = await request.get('http://127.0.0.1:8000/events/json/');
+
+    var data = response;
+
+    List<Events> listEvents = [];
+    for (var d in data) {
+      if (d != null) {
+        listEvents.add(Events.fromJson(d));
+      }
+    }
+
+    return listEvents;
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Events> displayedEvents = _dummyEvents;
-
-    if (_selectedFilter == "Global ") {
-      displayedEvents = _dummyEvents.where((event) => event.eventType == "Global").toList();
-    } else if (_selectedFilter == "Community Events") {
-      displayedEvents = _dummyEvents.where((event) => event.eventType == "Community").toList();
-    }
+    final request = context.watch<CookieRequest>();
 
     return Scaffold(
       drawer: const LeftDrawer(),
       appBar: const MainNavbar(),
-      body: SingleChildScrollView(
-        child: Column (
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildBanner(),
-            const SizedBox(height: 20),
+      body: FutureBuilder (
+        future: fetchEvents(request),
+        builder: (context, AsyncSnapshot snapshot) {
+          if (snapshot.data == null) {
+            return const Center(child: CircularProgressIndicator());
+          } else {
+            if (!snapshot.hasData) {
+              return const Column(
+                children: [
+                  Text (
+                    "No events found.",
+                    style: TextStyle(color: Color(0xff59A5D8), fontSize: 20),
+                  ),
+                  SizedBox(height: 8),
+                ],
+              );
+            } else {
+              // filtering logic
+              List<Events> events = snapshot.data!;
 
-            _buildTabsSection(displayedEvents.length),
-            const SizedBox(height: 20),
+              if (_selectedFilter == "Global Events") {
+                events = events.where((e) => e.eventType == "Global").toList();
+              } else if (_selectedFilter == "Community Events") {
+                events = events.where((e) => e.eventType == "Community").toList();
+              }
 
-            Padding (
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column (
-                children: displayedEvents.map((event) => _buildCard(event)).toList(),
-              ),
-            ),
-            const SizedBox(height: 40),
-          ],
-        )
+              return SingleChildScrollView(
+                child: Column (
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildBanner(),
+                    const SizedBox(height: 20),
+
+                    _buildTabsSection(events.length),
+                    const SizedBox(height: 20),
+
+                    Padding (
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column (
+                        children: events.map((event) => _buildCard(event)).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              );
+            }
+          }
+        }
       )
     );
   }
@@ -123,8 +132,12 @@ class _EventPageState extends State<EventPage> {
           const SizedBox(height: 20),
           ElevatedButton.icon (
             onPressed: () {
-              // LINK BUAT KE CREATE EVENT
-              // TODO: Buat screen create event
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EventFormPage()),
+              ).then((_) {
+                setState(() {});
+              });
             },
 
             icon: const Icon(Icons.add_circle_outline, color: Colors.white),
@@ -189,7 +202,15 @@ class _EventPageState extends State<EventPage> {
 
 
   Widget _buildCard(Events event) {
-    bool isCommunity = event.eventType == "Community";
+    bool isGlobal = event.eventType == "Global";
+
+    // global menggunakan biru, community menggunakan hijau
+    Color badgeColor = isGlobal ? const Color(0xFFE3F2FD) : const Color(0xFFC8E6C9);
+    Color badgeTextColor = isGlobal ? const Color(0xFF1565C0) : const Color(0xFF2E7D32);
+    String badgeText = isGlobal ? "Global Event" : "Community Tournament";
+
+    // cek kalo ada image apa tidak
+    bool hasImage = event.pictureUrl != null && event.pictureUrl!.isNotEmpty;
 
     return Card (
       elevation : 4,
@@ -197,22 +218,37 @@ class _EventPageState extends State<EventPage> {
       child: Column (
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
           // buat image di cardnya
-          Container (
+          Container(
             height: 150,
             width: double.infinity,
-            decoration: const BoxDecoration (
+            decoration: const BoxDecoration(
               color: Color(0xFF004D40),
-              borderRadius: BorderRadius.only (
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
             ),
-
-            child: const Center (
+            // kalo ada image, tampilkan imagenya, kalau tidak gunakan icon
+            child: hasImage
+                ? ClipRRect(
+              borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12)),
+              child: Image.network(
+                event.pictureUrl!,
+                fit: BoxFit.cover,
+                // Handle error kalo url rusak
+                errorBuilder: (context, error, stackTrace) =>
+                const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 64)),
+              ),
+            )
+                : const Center(
               child: Icon(Icons.sports_tennis, color: Colors.white, size: 64),
             ),
           ),
+
 
           // Card body
           Padding (
@@ -223,16 +259,16 @@ class _EventPageState extends State<EventPage> {
                 Row (
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container (
+                    Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFC8E6C9),
+                        color: badgeColor, // Uses the variable we made at top
                         borderRadius: BorderRadius.circular(20),
                       ),
 
-                      child: const Text (
-                        "Community Tournament",
-                        style: TextStyle(color: Color(0xFF2E7D32), fontSize: 10, fontWeight: FontWeight.bold),
+                      child: Text (
+                        badgeText,
+                        style: TextStyle(color: badgeTextColor, fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ),
 
