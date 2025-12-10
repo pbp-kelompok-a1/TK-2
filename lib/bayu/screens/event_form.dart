@@ -6,9 +6,13 @@ import 'package:provider/provider.dart';
 import '../../ilham/widgets/left_drawer.dart';
 import '../../ilham/widgets/navbar.dart';
 import '../../abi/models/CabangOlahraga.dart';
+import '../models/events.dart';
 
 class EventFormPage extends StatefulWidget {
-  const EventFormPage({super.key});
+  final Events? event;
+  final bool isGlobal;
+
+  const EventFormPage({super.key, this.event, this.isGlobal = false});
 
   @override
   State<EventFormPage> createState() => _EventFormPageState();
@@ -18,10 +22,10 @@ class _EventFormPageState extends State<EventFormPage> {
   final _formKey = GlobalKey<FormState>();
 
   // Variabel Input User
-  String _title = "";
-  String _description = "";
-  String _location = "";
-  String _pictureUrl = "";
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _pictureUrlController = TextEditingController();
 
   // Variabel Dropdown (Menyimpan ID)
   String? _selectedSportId;
@@ -34,10 +38,33 @@ class _EventFormPageState extends State<EventFormPage> {
   TimeOfDay _selectedTime = TimeOfDay.now();
 
   @override
+  @override
   void initState() {
     super.initState();
-    // Ambil data cabang olahraga begitu halaman dibuka
-    Future.microtask(() => _fetchSportBranches());
+    _fetchSportBranches(); // Fetch dropdown data first
+
+    if (widget.event != null) {
+      _titleController.text = widget.event!.title;
+      _descriptionController.text = widget.event!.description;
+      _locationController.text = widget.event!.location;
+
+      // Handle null image
+      _pictureUrlController.text = widget.event!.pictureUrl ?? "";
+
+      // Parse existing date
+      _selectedDate = widget.event!.startTime;
+      _selectedTime = TimeOfDay.fromDateTime(widget.event!.startTime);
+    }
+  }
+
+  // dispse to prevent memory leaks
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _pictureUrlController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchSportBranches() async {
@@ -100,16 +127,13 @@ class _EventFormPageState extends State<EventFormPage> {
             children: [
               // --- INPUT JUDUL ---
               TextFormField(
+                controller: _titleController,
                 decoration: InputDecoration(
                   labelText: "Title",
                   hintText: "Masukkan nama turnamen",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
                 ),
-                onChanged: (String? value) {
-                  setState(() {
-                    _title = value!;
-                  });
-                },
+
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
                     return "Judul tidak boleh kosong!";
@@ -121,17 +145,14 @@ class _EventFormPageState extends State<EventFormPage> {
 
               // --- INPUT DESKRIPSI ---
               TextFormField(
+                controller: _descriptionController,
                 decoration: InputDecoration(
                   labelText: "Description",
                   hintText: "Deskripsi detail acara...",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
                 ),
                 maxLines: 3,
-                onChanged: (String? value) {
-                  setState(() {
-                    _description = value!;
-                  });
-                },
+
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
                     return "Deskripsi tidak boleh kosong!";
@@ -143,16 +164,12 @@ class _EventFormPageState extends State<EventFormPage> {
 
               // --- INPUT LOKASI ---
               TextFormField(
+                controller: _locationController,
                 decoration: InputDecoration(
                   labelText: "Location",
                   hintText: "Lokasi pertandingan",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
                 ),
-                onChanged: (String? value) {
-                  setState(() {
-                    _location = value!;
-                  });
-                },
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
                     return "Lokasi tidak boleh kosong!";
@@ -167,7 +184,6 @@ class _EventFormPageState extends State<EventFormPage> {
                 value: _selectedSportId,
                 hint: const Text("Pilih Cabang Olahraga"),
 
-                // INI PERBAIKANNYA: Pindahkan border ke dalam InputDecoration
                 decoration: InputDecoration(
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
@@ -194,16 +210,12 @@ class _EventFormPageState extends State<EventFormPage> {
 
               // --- INPUT URL GAMBAR ---
               TextFormField(
+                controller: _pictureUrlController,
                 decoration: InputDecoration(
                   labelText: "Picture URL",
                   hintText: "http://example.com/image.png",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
                 ),
-                onChanged: (String? value) {
-                  setState(() {
-                    _pictureUrl = value!;
-                  });
-                },
               ),
               const SizedBox(height: 20),
 
@@ -256,18 +268,26 @@ class _EventFormPageState extends State<EventFormPage> {
                       _selectedTime.hour, _selectedTime.minute,
                     );
 
+                    String url;
+                    if (widget.event == null) {
+                      url = "http://127.0.0.1:8000/event/create-flutter/";
+                    } else if (widget.isGlobal){
+                      url = "http://127.0.0.1:8000/events/create-flutter-global/";
+                    } else {
+                      url = "http://127.0.0.1:8000/events/create-flutter/";
+                    }
+
                     // 2. Kirim ke Django
-                    // TODO: Pastikan URL ini sesuai dengan path di urls.py ('event/create-flutter/')
                     final response = await request.postJson(
-                      "http://10.0.2.2:8000/event/create-flutter/",
-                      jsonEncode(<String, dynamic>{
-                        'title': _title,
-                        'description': _description,
-                        'location': _location,
-                        'cabang_olahraga_id': _selectedSportId, // Kirim ID
-                        'picture_url': _pictureUrl,
+                      url,
+                      <String, dynamic>{
+                        'title': _titleController.text, // Use controller.text
+                        'description': _descriptionController.text,
+                        'location': _locationController.text,
+                        'cabang_olahraga_id': _selectedSportId,
+                        'picture_url': _pictureUrlController.text,
                         'start_time': fullDateTime.toIso8601String(),
-                      }),
+                      },
                     );
 
                     // 3. Cek Response
@@ -277,7 +297,7 @@ class _EventFormPageState extends State<EventFormPage> {
                           content: Text("Event berhasil dibuat!"),
                           backgroundColor: Colors.green,
                         ));
-                        Navigator.pop(context); // Kembali ke halaman list
+                        Navigator.pop(context, true); // Kembali ke halaman list
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text("Gagal: ${response['message']}"),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +19,34 @@ class EventPage extends StatefulWidget {
 
 class _EventPageState extends State<EventPage> {
   String _selectedFilter = "All Events";
+
+  String _currentUsername = "";
+  bool _isAdmin = false;
+  @override
+  void initState() {
+    super.initState();
+    // Check role langsung saat page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUserRole();
+    });
+  }
+
+  // check role dari django
+  Future<void> _checkUserRole() async {
+    final request = context.read<CookieRequest>();
+    try {
+      final response = await request.get("http://127.0.0.1:8000/events/user-status/");
+
+      if (mounted) {
+        setState(() {
+          _isAdmin = response['is_superuser'] ?? false;
+          _currentUsername = response['username'] ?? "";
+        });
+      }
+    } catch (e) {
+      print("Error fetching user role: $e");
+    }
+  }
 
   Future<List<Events>> fetchEvents(CookieRequest request) async {
     final response = await request.get('http://127.0.0.1:8000/events/json/');
@@ -38,62 +68,73 @@ class _EventPageState extends State<EventPage> {
     final request = context.watch<CookieRequest>();
 
     return Scaffold(
-      drawer: const LeftDrawer(),
-      appBar: const MainNavbar(),
-      body: FutureBuilder (
-        future: fetchEvents(request),
-        builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.data == null) {
-            return const Center(child: CircularProgressIndicator());
-          } else {
-            if (!snapshot.hasData) {
-              return const Column(
-                children: [
-                  Text (
-                    "No events found.",
-                    style: TextStyle(color: Color(0xff59A5D8), fontSize: 20),
-                  ),
-                  SizedBox(height: 8),
-                ],
-              );
-            } else {
-              // filtering logic
-              List<Events> events = snapshot.data!;
-
-              if (_selectedFilter == "Global Events") {
-                events = events.where((e) => e.eventType == "Global").toList();
-              } else if (_selectedFilter == "Community Events") {
-                events = events.where((e) => e.eventType == "Community").toList();
-              }
-
-              return SingleChildScrollView(
-                child: Column (
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildBanner(),
-                    const SizedBox(height: 20),
-
-                    _buildTabsSection(events.length),
-                    const SizedBox(height: 20),
-
-                    Padding (
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column (
-                        children: events.map((event) => _buildCard(event)).toList(),
+        drawer: const LeftDrawer(),
+        appBar: const MainNavbar(),
+        body: FutureBuilder (
+            future: fetchEvents(request),
+            builder: (context, AsyncSnapshot snapshot) {
+              if (snapshot.data == null) {
+                return const Center(child: CircularProgressIndicator());
+              } else {
+                if (!snapshot.hasData) {
+                  return const Column(
+                    children: [
+                      Text (
+                        "No events found.",
+                        style: TextStyle(color: Color(0xff59A5D8), fontSize: 20),
                       ),
+                      SizedBox(height: 8),
+                    ],
+                  );
+                } else {
+                  // filtering logic
+                  List<Events> events = snapshot.data!;
+
+                  //Debug lagi
+                  if (events.isNotEmpty) {
+                    print("Current Filter: '$_selectedFilter'");
+                    print("Sample Event Type from DB: '${events[0].eventType}'");
+                  }
+
+                  if (_selectedFilter == "Global Events") {
+                    events = events.where((e) =>
+                    e.eventType.toString().toLowerCase().trim() == "global"
+                    ).toList();
+                  } else if (_selectedFilter == "Community Events") {
+                    events = events.where((e) =>
+                    e.eventType.toString().toLowerCase().trim() == "community"
+                    ).toList();
+                  }
+
+                  return SingleChildScrollView(
+                    child: Column (
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildBanner(request), // Pass request here
+                        const SizedBox(height: 20),
+
+                        _buildTabsSection(events.length),
+                        const SizedBox(height: 20),
+
+                        Padding (
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column (
+                            // Pass request di isni
+                            children: events.map((event) => _buildCard(event, request)).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                      ],
                     ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              );
+                  );
+                }
+              }
             }
-          }
-        }
-      )
+        )
     );
   }
 
-  Widget _buildBanner() {
+  Widget _buildBanner(CookieRequest request) {
     return Container (
       margin: const EdgeInsets.all(20),
       width: double.infinity,
@@ -130,23 +171,58 @@ class _EventPageState extends State<EventPage> {
           ),
 
           const SizedBox(height: 20),
-          ElevatedButton.icon (
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EventFormPage()),
-              ).then((_) {
-                setState(() {});
-              });
-            },
 
-            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-            label: const Text("Create Community Tournament Community Tournaments.", style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00C853),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
+          // Logic for displaying buttons
+          if (!request.loggedIn) ...[
+            const Text(
+              "Log in to create tournaments.",
+              style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
+            )
+          ] else ...[
+            Wrap (
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  // Community Event Button (Authorized only)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const EventFormPage(isGlobal: false)),
+                      ).then((_) {
+                        setState(() {});
+                      });
+                    },
+                    icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+                    label: const Text("Create Community Tournament", style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00C853),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+
+                  //  Global Event Button (Admin Only)
+                  if (_isAdmin)
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const EventFormPage(isGlobal: true)),
+                        ).then((_) {
+                          setState(() {});
+                        });
+                      },
+                      icon: const Icon(Icons.star, color: Colors.white),
+                      label: const Text("Create Global", style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE65100),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                ]
+            )
+          ]
         ],
       ),
     );
@@ -201,7 +277,7 @@ class _EventPageState extends State<EventPage> {
   }
 
 
-  Widget _buildCard(Events event) {
+  Widget _buildCard(Events event, CookieRequest request) {
     bool isGlobal = event.eventType == "Global";
 
     // global menggunakan biru, community menggunakan hijau
@@ -262,7 +338,7 @@ class _EventPageState extends State<EventPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: badgeColor, // Uses the variable we made at top
+                        color: badgeColor,
                         borderRadius: BorderRadius.circular(20),
                       ),
 
@@ -321,14 +397,87 @@ class _EventPageState extends State<EventPage> {
                 const SizedBox(height: 10),
 
                 // Edit/Delete button
-                const Row (
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text("Edit", style: TextStyle(color: Colors.blue, fontSize: 12)),
-                    SizedBox(width: 10),
-                    Text("Delete", style: TextStyle(color: Colors.red, fontSize: 12)),
-                  ],
-                )
+                if (request.loggedIn && (_isAdmin || event.creator == _currentUsername))
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // --- EDIT BUTTON ---
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EventFormPage(event: event),
+                            ),
+                          ).then((_) {
+                            setState(() {}); // Refresh list
+                          });
+                        },
+                      ),
+
+                      // --- DELETE BUTTON ---
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Delete Event'),
+                              content: const Text('Are you sure you want to delete this event?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm == true && context.mounted) {
+
+                            try {
+                              // DEBUG: JANGAN LUP AHAPUS
+                              print("Attempting to delete event ID: ${event.id}");
+
+                              final response = await request.postJson(
+                                "http://127.0.0.1:8000/events/delete-flutter/${event.id}/",
+                                jsonEncode(<String, dynamic>{}),
+                              );
+
+                              // DEBUG: JANGAN LUPA HAPUS
+                              print("Server Response: $response");
+
+                              if (context.mounted) {
+                                if (response['status'] == 'success') {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Event deleted successfully!")),
+                                  );
+
+                                  setState(() {});
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Failed: ${response['message']}")),
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              print("Error during delete: $e");
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Error: $e")),
+                                );
+                              }
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  )
               ],
             ),
           ),
