@@ -3,6 +3,10 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:tk2/delila/models/news_entry.dart';
 import 'package:tk2/delila/screens/edit_news_page.dart';
+// Pastikan import ini sesuai dengan lokasi file list kamu
+import 'package:tk2/delila/screens/news_entry_list.dart';
+import 'dart:convert'; // Wajib untuk base64Decode
+import 'dart:typed_data';
 
 class NewsDetailPage extends StatelessWidget {
   final NewsEntry news;
@@ -44,23 +48,33 @@ class NewsDetailPage extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 final request = context.read<CookieRequest>();
+                Navigator.pop(context); // Tutup Dialog dulu
 
                 final response = await request.postJson(
-                  "http://localhost:8000/news/delete-flutter/$newsId/",
+                  "http://127.0.0.1:8000/news/delete-flutter/$newsId/",
                   "{}",
                 );
 
                 if (context.mounted) {
-                  Navigator.pop(context); // close dialog
-
-                  if (response['status'] == 'success') {
+                  if (response['status'] == 'success' ||
+                      response['status'] == 'ok') {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("News deleted")),
+                      const SnackBar(
+                        content: Text("News deleted successfully"),
+                      ),
                     );
-                    Navigator.pop(context, true); // balik ke list + refresh
+
+                    // --- LOGIC BARU: REPLACE HALAMAN ---
+                    // Langsung timpa halaman ini dengan List Page baru agar refresh
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NewsEntryListPage(),
+                      ),
+                    );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Failed to delete")),
+                      const SnackBar(content: Text("Failed to delete news")),
                     );
                   }
                 }
@@ -85,11 +99,12 @@ class NewsDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thumbnail
+            // --- THUMBNAIL SECTION ---
             SizedBox(
               width: double.infinity,
-              height: 250,
+              height: 200,
               child: () {
+                // 1. Cek apakah thumbnail kosong
                 if (news.thumbnail == null || news.thumbnail!.trim().isEmpty) {
                   return Container(
                     color: Colors.grey[300],
@@ -97,18 +112,51 @@ class NewsDetailPage extends StatelessWidget {
                   );
                 }
 
+                final rawThumbnail = news.thumbnail!;
+
+                // 2. LOGIC KHUSUS BASE64 (Ini solusi masalahmu!)
+                if (rawThumbnail.startsWith('data:image')) {
+                  try {
+                    // Kita harus buang bagian header "data:image/jpeg;base64,"
+                    // dan ambil isinya saja (setelah tanda koma)
+                    final base64String = rawThumbnail.split(',').last;
+                    Uint8List decodedBytes = base64Decode(base64String);
+
+                    return Image.memory(
+                      decodedBytes,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        child: const Center(child: Icon(Icons.broken_image)),
+                      ),
+                    );
+                  } catch (e) {
+                    print("Error decoding base64: $e");
+                    return const Center(child: Icon(Icons.error));
+                  }
+                }
+
+                // 3. LOGIC URL BIASA (Pakai Proxy Django)
+                // Hanya jalan kalau thumbnail BUKAN base64 (misal: http://...)
+                final encodedUrl = Uri.encodeComponent(rawThumbnail);
+
+                // Ingat: Web pakai 127.0.0.1, Emulator pakai 10.0.2.2
                 final proxyUrl =
-                    "http://localhost:8000/proxy-image/?url=${Uri.encodeComponent(news.thumbnail!)}";
+                    "http://127.0.0.1:8000/proxy-image/?url=$encodedUrl";
 
                 return Image.network(
                   proxyUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: Icon(Icons.broken_image, size: 50),
-                    ),
-                  ),
+                  errorBuilder: (context, error, stackTrace) {
+                    // Debugging
+                    print("Gagal load proxy: $proxyUrl");
+                    return Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: Icon(Icons.broken_image, size: 50),
+                      ),
+                    );
+                  },
                 );
               }(),
             ),
@@ -118,7 +166,7 @@ class NewsDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
+                  // --- TITLE ---
                   Text(
                     news.title,
                     style: const TextStyle(
@@ -128,10 +176,9 @@ class NewsDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // Category + Author + Date
+                  // --- METADATA ROW ---
                   Row(
                     children: [
-                      // CATEGORY PILL
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -142,7 +189,8 @@ class NewsDetailPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          categoryValues.reverse[news.category]!.toUpperCase(),
+                          (categoryValues.reverse[news.category] ?? 'Other')
+                              .toUpperCase(),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -150,22 +198,18 @@ class NewsDetailPage extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 12),
-
-                      // AUTHOR
-                      Text(
-                        "by ${authorValues.reverse[news.author]!}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          "by ${authorValues.reverse[news.author] ?? 'Unknown'}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-
-                      const SizedBox(width: 12),
-
-                      // DATE
                       Text(
                         _formatDate(news.createdAt),
                         style: TextStyle(fontSize: 12, color: Colors.grey[600]),
@@ -175,7 +219,7 @@ class NewsDetailPage extends StatelessWidget {
 
                   const Divider(height: 32),
 
-                  // CONTENT
+                  // --- CONTENT ---
                   Text(
                     news.content,
                     style: const TextStyle(fontSize: 16, height: 1.6),
@@ -184,44 +228,61 @@ class NewsDetailPage extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
+                  // --- BUTTONS ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // EDIT BUTTON
-                      ElevatedButton(
+                      // Edit Button
+                      ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          "Edit",
+                          style: TextStyle(color: Colors.white),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.indigo,
                         ),
-                        onPressed: () {
-                          Navigator.push(
+                        onPressed: () async {
+                          // Tunggu user selesai edit di halaman EditNewsPage
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => EditNewsPage(news: news),
                             ),
-                          ).then((changed) {
-                            if (changed == true) {
-                              Navigator.pop(context); // refresh detail page
-                            }
-                          });
+                          );
+
+                          // Jika user menekan tombol Save (mengirim result true),
+                          // Maka kita refresh paksa ke halaman List
+                          if (context.mounted && result == true) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NewsEntryListPage(),
+                              ),
+                            );
+                          }
                         },
-                        child: const Text(
-                          "Edit",
-                          style: TextStyle(color: Colors.white),
-                        ),
                       ),
 
-                      // DELETE BUTTON
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
+                      // Delete Button
+                      ElevatedButton.icon(
+                        icon: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 18,
                         ),
-                        onPressed: () {
-                          _confirmDelete(context, news.id);
-                        },
-                        child: const Text(
+                        label: const Text(
                           "Delete",
                           style: TextStyle(color: Colors.white),
                         ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        onPressed: () => _confirmDelete(context, news.id),
                       ),
                     ],
                   ),

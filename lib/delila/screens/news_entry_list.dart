@@ -16,16 +16,11 @@ class NewsEntryListPage extends StatefulWidget {
 
 class _NewsEntryListPageState extends State<NewsEntryListPage> {
   Future<List<NewsEntry>> fetchNews(CookieRequest request) async {
-    // TODO: Replace the URL with your app's URL and don't forget to add a trailing slash (/)!
-    // To connect Android emulator with Django on localhost, use URL http://10.0.2.2/
-    // If you using chrome,  use URL http://localhost:8000
-    
-    final response = await request.get('http://localhost:8000/news/json/');
-    
-    // Decode response to json format
+    // URL tetap 127.0.0.1 sesuai request
+    final response = await request.get('http://127.0.0.1:8000/news/json/');
+
     var data = response;
-    
-    // Convert json data to NewsEntry objects
+
     List<NewsEntry> listNews = [];
     for (var d in data) {
       if (d != null) {
@@ -44,53 +39,69 @@ class _NewsEntryListPageState extends State<NewsEntryListPage> {
       ),
       drawer: const LeftDrawer(),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
         onPressed: () async {
+          // BAGIAN INI SUDAH BENAR (Create News)
           final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const NewsFormPage()),
           );
 
           if (result == true) {
-            setState(() {});  // ulang fetchNews
+            setState(() {}); 
           }
         },
       ),
       body: FutureBuilder(
         future: fetchNews(request),
         builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.data == null) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else {
-            if (!snapshot.hasData) {
-              return const Column(
+          } 
+          else if (snapshot.hasError) {
+             return Center(
+               child: Text('Error: ${snapshot.error}'),
+             );
+          }
+          else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     'There are no news in Paralympic yet.',
                     style: TextStyle(fontSize: 20, color: Color(0xff59A5D8)),
+                    textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 8),
                 ],
-              );
-            } else {
-              return ListView.builder(
-                itemCount: snapshot.data!.length,
-                itemBuilder: (_, index) => NewsEntryCard(
-                  news: snapshot.data![index],
-                  onTap: () {
-                    // Navigate to news detail page
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NewsDetailPage(
-                          news: snapshot.data![index],
-                        ),
+              ),
+            );
+          } 
+          else {
+            return ListView.builder(
+              itemCount: snapshot.data!.length,
+              itemBuilder: (_, index) => NewsEntryCard(
+                news: snapshot.data![index],
+                // --- PERBAIKAN DI SINI ---
+                onTap: () async { // 1. Tambah async
+                  final result = await Navigator.push( // 2. Tambah await & tampung result
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NewsDetailPage(
+                        news: snapshot.data![index],
                       ),
-                    );
-                  },
-                ),
-              );
-            }
+                    ),
+                  );
+
+                  // 3. Jika result true (dari delete/edit), refresh list
+                  if (result == true) {
+                    setState(() {});
+                  }
+                },
+                // -------------------------
+              ),
+            );
           }
         },
       ),

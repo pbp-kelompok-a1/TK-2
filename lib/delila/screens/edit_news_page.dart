@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:tk2/delila/models/news_entry.dart';
-import 'package:tk2/ilham/screens/menu.dart';
+import 'package:tk2/ilham/screens/menu.dart'; // Sesuaikan import ini jika perlu
 
 class EditNewsPage extends StatefulWidget {
   final NewsEntry news;
@@ -35,7 +34,12 @@ class _EditNewsPageState extends State<EditNewsPage> {
     super.initState();
     _title = widget.news.title;
     _content = widget.news.content;
-    _category = categoryValues.reverse[widget.news.category]!;
+    // Handle jika kategori dari backend tidak ada di list
+    String initialCat = categoryValues.reverse[widget.news.category] ?? 'other';
+    if (!_categories.contains(initialCat)) {
+      initialCat = 'other';
+    }
+    _category = initialCat;
     _thumbnail = widget.news.thumbnail ?? "";
   }
 
@@ -111,13 +115,15 @@ class _EditNewsPageState extends State<EditNewsPage> {
                     ),
                   ),
                   value: _category,
-                  items: _categories
-                      .map((cat) => DropdownMenuItem(
-                            value: cat,
-                            child: Text(cat[0].toUpperCase() + cat.substring(1)),
-                          ))
-                      .toList(),
-                  onChanged: (newValue) => _category = newValue!,
+                  items: _categories.map((cat) {
+                    return DropdownMenuItem(
+                      value: cat,
+                      child: Text(cat[0].toUpperCase() + cat.substring(1)),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) => setState(() {
+                    _category = newValue!;
+                  }),
                 ),
               ),
 
@@ -150,7 +156,8 @@ class _EditNewsPageState extends State<EditNewsPage> {
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         final response = await request.postJson(
-                          "http://localhost:8000/news/edit-flutter/${widget.news.id}/",
+                          // Pastikan URL ini benar
+                          "http://127.0.0.1:8000/news/edit-flutter/${widget.news.id}/",
                           jsonEncode({
                             "title": _title,
                             "content": _content,
@@ -160,13 +167,15 @@ class _EditNewsPageState extends State<EditNewsPage> {
                         );
 
                         if (context.mounted) {
-                          if (response['status'] == 'success') {
+                          // PERBAIKAN DISINI: Cek 'success' ATAU 'ok'
+                          if (response['status'] == 'success' || response['status'] == 'ok') {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text("News successfully updated!"),
                               ),
                             );
-                            Navigator.pop(context, true);
+                            // Kirim sinyal 'true' bahwa data berubah
+                            Navigator.pop(context, true); 
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
