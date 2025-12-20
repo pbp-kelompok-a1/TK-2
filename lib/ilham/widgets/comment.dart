@@ -1,92 +1,17 @@
-// comment_widget.dart
 import 'package:flutter/material.dart';
-
-// Model untuk Comment (sesuai dengan Django model)
-class Comment {
-  final int id;
-  final int newsId;  // foreign key ke Berita
-  final int userId;  // foreign key ke User
-  final String username;
-  final String content;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final bool isEdited;
-  final bool isOwner;
-  final bool canDelete;
-
-  Comment({
-    required this.id,
-    required this.newsId,
-    required this.userId,
-    required this.username,
-    required this.content,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.isEdited,
-    required this.isOwner,
-    required this.canDelete,
-  });
-
-  factory Comment.fromJson(Map<String, dynamic> json) {
-    return Comment(
-      id: json['id'],
-      newsId: json['news'],
-      userId: json['user_id'],
-      username: json['user'] ?? json['username'],
-      content: json['content'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      isEdited: json['is_edited'] ?? false,
-      isOwner: json['is_owner'] ?? false,
-      canDelete: json['can_delete'] ?? false,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'news': newsId,
-      'user_id': userId,
-      'user': username,
-      'content': content,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'is_edited': isEdited,
-      'is_owner': isOwner,
-      'can_delete': canDelete,
-    };
-  }
-
-  // Helper untuk format tanggal
-  String get formattedDate {
-    final now = DateTime.now();
-    final difference = now.difference(createdAt);
-
-    if (difference.inDays > 7) {
-      return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
-    } else if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
-    } else {
-      return 'Just now';
-    }
-  }
-}
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:tk2/ilham/models/comment_model.dart'; // Import model dari file terpisah
 
 // Main Comment Widget
 class CommentWidget extends StatefulWidget {
   final int newsId;
-  final bool isAuthenticated;
-  final String currentUsername;
+  final String baseUrl; // e.g., 'https://your-domain.com' or 'http://localhost:8000'
 
   const CommentWidget({
     Key? key,
     required this.newsId,
-    required this.isAuthenticated,
-    required this.currentUsername,
+    required this.baseUrl,
   }) : super(key: key);
 
   @override
@@ -94,7 +19,7 @@ class CommentWidget extends StatefulWidget {
 }
 
 class _CommentWidgetState extends State<CommentWidget> {
-  List<Comment> comments = [];
+  List<CommentModel> comments = [];
   bool isLoading = true;
   bool showCommentInput = false;
   final TextEditingController _commentController = TextEditingController();
@@ -112,56 +37,25 @@ class _CommentWidgetState extends State<CommentWidget> {
     super.dispose();
   }
 
-  // TODO: Implementasi GET request ke Django
-  // Expected Django response format:
-  // [
-  //   {
-  //     "id": 1,
-  //     "news": 123,
-  //     "user_id": 5,
-  //     "user": "username",
-  //     "content": "Comment text",
-  //     "created_at": "2024-01-15T10:30:00Z",
-  //     "updated_at": "2024-01-15T10:30:00Z",
-  //     "is_edited": false,
-  //     "is_owner": true,
-  //     "can_delete": true
-  //   }
-  // ]
+  // GET request ke Django untuk load comments
   Future<void> loadComments() async {
     setState(() => isLoading = true);
 
     try {
-      // TODO: Import package http: import 'package:http/http.dart' as http;
-      // TODO: Import dart:convert untuk json.decode
+      final request = context.read<CookieRequest>();
       
-      // final response = await http.get(
-      //   Uri.parse('https://your-domain.com/comment/json/${widget.newsId}/'),
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     // TODO: Jika pakai authentication, tambahkan header:
-      //     // 'Authorization': 'Bearer $token',
-      //     // atau
-      //     // 'Cookie': 'sessionid=$sessionId',
-      //   },
-      // );
-      // 
-      // if (response.statusCode == 200) {
-      //   final List<dynamic> data = json.decode(response.body);
-      //   setState(() {
-      //     comments = data.map((json) => Comment.fromJson(json)).toList();
-      //     isLoading = false;
-      //   });
-      // } else {
-      //   throw Exception('Failed to load comments');
-      // }
+      final response = await request.get(
+        '${widget.baseUrl}/comment/json/${widget.newsId}/',
+      );
 
-      // Dummy data untuk testing
-      await Future.delayed(const Duration(seconds: 1));
-      setState(() {
-        comments = []; // Replace dengan data dari response
-        isLoading = false;
-      });
+      if (response is List) {
+        setState(() {
+          comments = response.map((json) => CommentModel.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Unexpected response format');
+      }
     } catch (e) {
       setState(() => isLoading = false);
       if (mounted) {
@@ -172,12 +66,7 @@ class _CommentWidgetState extends State<CommentWidget> {
     }
   }
 
-  // TODO: Implementasi POST request untuk add comment
-  // Django akan membuat record baru di database dengan:
-  // - news: widget.newsId (dari ForeignKey)
-  // - user: dari request.user (authenticated user)
-  // - content: dari form data
-  // - created_at & updated_at: auto-generated
+  // POST request untuk add comment
   Future<void> addComment(String content) async {
     if (content.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -187,38 +76,27 @@ class _CommentWidgetState extends State<CommentWidget> {
     }
 
     try {
-      // TODO: Import package http dan dart:convert
-      
-      // final response = await http.post(
-      //   Uri.parse('https://your-domain.com/comment/add/${widget.newsId}/'),
-      //   headers: {
-      //     'Content-Type': 'application/x-www-form-urlencoded',
-      //     // TODO: Tambahkan CSRF token jika diperlukan:
-      //     // 'X-CSRFToken': csrfToken,
-      //     // TODO: Tambahkan auth header:
-      //     // 'Cookie': 'sessionid=$sessionId',
-      //   },
-      //   body: {'content': content},
-      // );
-      //
-      // if (response.statusCode == 200 || response.statusCode == 201) {
-      //   final result = json.decode(response.body);
-      //   if (result['success'] == true) {
-      //     _commentController.clear();
-      //     setState(() => showCommentInput = false);
-      //     await loadComments();
-      //   } else {
-      //     throw Exception(result['message'] ?? 'Failed to add comment');
-      //   }
-      // } else {
-      //   throw Exception('Server error: ${response.statusCode}');
-      // }
+      final request = context.read<CookieRequest>();
 
-      // Dummy implementation
-      await Future.delayed(const Duration(milliseconds: 500));
-      _commentController.clear();
-      setState(() => showCommentInput = false);
-      await loadComments();
+      final response = await request.post(
+        '${widget.baseUrl}/comment/add/${widget.newsId}/',
+        {'content': content},
+      );
+
+      if (response['success'] == true) {
+        _commentController.clear();
+        setState(() => showCommentInput = false);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response['message'] ?? 'Comment added successfully!')),
+          );
+        }
+        
+        await loadComments(); // Reload comments
+      } else {
+        throw Exception(response['error'] ?? 'Failed to add comment');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -228,7 +106,7 @@ class _CommentWidgetState extends State<CommentWidget> {
     }
   }
 
-  // TODO: Implementasi POST request untuk edit comment
+  // POST request untuk edit comment
   Future<void> editComment(int commentId, String newContent) async {
     if (newContent.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,9 +116,26 @@ class _CommentWidgetState extends State<CommentWidget> {
     }
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      setState(() => editingCommentId = null);
-      await loadComments();
+      final request = context.read<CookieRequest>();
+
+      final response = await request.post(
+        '${widget.baseUrl}/comment/edit/$commentId/',
+        {'content': newContent},
+      );
+
+      if (response['success'] == true) {
+        setState(() => editingCommentId = null);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response['message'] ?? 'Comment updated successfully!')),
+          );
+        }
+        
+        await loadComments();
+      } else {
+        throw Exception(response['error'] ?? 'Failed to edit comment');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -250,7 +145,7 @@ class _CommentWidgetState extends State<CommentWidget> {
     }
   }
 
-  // TODO: Implementasi POST request untuk delete comment
+  // POST request untuk delete comment
   Future<void> deleteComment(int commentId) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -273,8 +168,24 @@ class _CommentWidgetState extends State<CommentWidget> {
     if (confirmed != true) return;
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      await loadComments();
+      final request = context.read<CookieRequest>();
+
+      final response = await request.post(
+        '${widget.baseUrl}/comment/delete/$commentId/',
+        {},
+      );
+
+      if (response['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(response['message'] ?? 'Comment deleted successfully!')),
+          );
+        }
+        
+        await loadComments();
+      } else {
+        throw Exception(response['error'] ?? 'Failed to delete comment');
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -286,6 +197,9 @@ class _CommentWidgetState extends State<CommentWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final request = context.watch<CookieRequest>();
+    final isAuthenticated = request.loggedIn;
+
     return Container(
       constraints: const BoxConstraints(maxWidth: 1152),
       padding: const EdgeInsets.all(16),
@@ -293,7 +207,7 @@ class _CommentWidgetState extends State<CommentWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Add Comment Button / Login Prompt
-          if (widget.isAuthenticated)
+          if (isAuthenticated)
             _buildAddCommentSection()
           else
             _buildLoginPrompt(),
@@ -402,13 +316,17 @@ class _CommentWidgetState extends State<CommentWidget> {
 
   Widget _buildLoginPrompt() {
     return Center(
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(color: Colors.grey, fontSize: 14),
-          children: [
-            const TextSpan(text: 'Login to add a comment'),
-            // TODO: Implement navigation to login page
-          ],
+      child: GestureDetector(
+        onTap: () {
+          // TODO: Navigate to login page
+        },
+        child: RichText(
+          text: const TextSpan(
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+            children: [
+              TextSpan(text: 'Login to add a comment'),
+            ],
+          ),
         ),
       ),
     );
@@ -480,7 +398,7 @@ class _CommentWidgetState extends State<CommentWidget> {
     );
   }
 
-  Widget _buildCommentItem(Comment comment, bool isEditing) {
+  Widget _buildCommentItem(CommentModel comment, bool isEditing) {
     final editController = TextEditingController(text: comment.content);
 
     return Column(
@@ -492,12 +410,12 @@ class _CommentWidgetState extends State<CommentWidget> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
-              comment.username,
+              comment.user,
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
             Text('•', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
             Text(
-              comment.formattedDate,  // Menggunakan helper dari model
+              comment.date,
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
             if (comment.isEdited)
