@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,19 +22,25 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = true;
   bool _isEditMode = false;
 
+  // User data
   String _displayName = "";
   String _username = "";
   String? _profilePictureUrl;
   DateTime? _joinDate;
 
+  // Stats
   int _followingCount = 0;
   int _commentCount = 0;
   int _eventCount = 0;
 
+  // Following sports
   List<FollowingElement> _followingList = [];
   List<CabangOlahragaElement> _availableSports = [];
+
+  // Recent activity
   List<RecentActivity> _recentActivity = [];
 
+  // Controllers
   final TextEditingController _nameController = TextEditingController();
   Uint8List? _selectedImageBytes;
   final ImagePicker _picker = ImagePicker();
@@ -327,6 +332,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: _buildProfileCard(),
                   ),
                   const SizedBox(width: 20),
+                  // Sidebar
                   Expanded(
                     flex: 1,
                     child: _buildSidebarCard(),
@@ -813,6 +819,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return '${_joinDate!.day} ${months[_joinDate!.month - 1]} ${_joinDate!.year}';
   }
 }
+
 class RecentActivity {
   final String type;
   final String description;
