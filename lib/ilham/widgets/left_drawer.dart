@@ -4,6 +4,7 @@ import 'package:tk2/ilham/screens/menu.dart';
 import 'package:tk2/ilham/screens/login.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:tk2/ilham/screens/test_comment.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 import 'package:tk2/bayu/screens/event_page.dart';
 import 'package:tk2/delila/screens/news_entry_list.dart';
@@ -156,6 +157,20 @@ class _LeftDrawerState extends State<LeftDrawer> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const EventPage()),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.comment_outlined),
+            title: const Text('test comment'),
+            onTap: () {
+              // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TestCommentPage(),
+                ),
               );
             },
           ),

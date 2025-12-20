@@ -3,9 +3,9 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:tk2/delila/models/news_entry.dart';
 import 'package:tk2/delila/screens/edit_news_page.dart';
-// Pastikan import ini sesuai dengan lokasi file list kamu
 import 'package:tk2/delila/screens/news_entry_list.dart';
-import 'dart:convert'; // Wajib untuk base64Decode
+import 'package:tk2/ilham/widgets/comment.dart';
+import 'dart:convert'; 
 import 'dart:typed_data';
 
 class NewsDetailPage extends StatelessWidget {
@@ -51,7 +51,7 @@ class NewsDetailPage extends StatelessWidget {
                 Navigator.pop(context); // Tutup Dialog dulu
 
                 final response = await request.postJson(
-                  "http://127.0.0.1:8000/news/delete-flutter/$newsId/",
+                  "http://localhost:8000/news/delete-flutter/$newsId/",
                   "{}",
                 );
 
@@ -142,7 +142,7 @@ class NewsDetailPage extends StatelessWidget {
 
                 // Ingat: Web pakai 127.0.0.1, Emulator pakai 10.0.2.2
                 final proxyUrl =
-                    "http://127.0.0.1:8000/proxy-image/?url=$encodedUrl";
+                    "http://localhost:8000/proxy-image/?url=$encodedUrl";
 
                 return Image.network(
                   proxyUrl,
@@ -283,6 +283,22 @@ class NewsDetailPage extends StatelessWidget {
                           backgroundColor: Colors.red,
                         ),
                         onPressed: () => _confirmDelete(context, news.id),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // --- SEPARATOR LINE ---
+                      const Divider(
+                        thickness: 1,
+                        color: Colors.grey,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // --- COMMENT SECTION ---
+                      CommentWidget(
+                        newsId: news.id,
+                        baseUrl: 'http://localhost:8000', // Sesuaikan dengan backend URL kamu
                       ),
                     ],
                   ),
