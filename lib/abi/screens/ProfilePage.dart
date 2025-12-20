@@ -36,6 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // Following sports
   List<FollowingElement> _followingList = [];
   List<CabangOlahragaElement> _availableSports = [];
+  Map<String, String> _allSportsMap = {};
 
   // Recent activity
   List<RecentActivity> _recentActivity = [];
@@ -81,6 +82,38 @@ class _ProfilePageState extends State<ProfilePage> {
       print('DEBUG: Profile Response: $response');
 
       if (response != null && response['success'] == true) {
+        List<FollowingElement> followingList = [];
+        if (response['following'] != null) {
+          followingList = (response['following'] as List)
+              .map((f) => FollowingElement.fromJson(f))
+              .toList();
+        }
+
+        List<CabangOlahragaElement> availableSports = [];
+        if (response['available_sports'] != null) {
+          availableSports = (response['available_sports'] as List)
+              .map((s) => CabangOlahragaElement.fromJson(s))
+              .toList();
+        }
+
+        Map<String, String> allSportsMap = {};
+
+        for (var follow in followingList) {
+          if (response['following'] != null) {
+            var followData = (response['following'] as List).firstWhere(
+                  (f) => f['id'] == follow.id,
+              orElse: () => null,
+            );
+            if (followData != null && followData['sport_name'] != null) {
+              allSportsMap[follow.cabangOlahraga] = followData['sport_name'];
+            }
+          }
+        }
+
+        for (var sport in availableSports) {
+          allSportsMap[sport.id] = sport.name;
+        }
+
         setState(() {
           _displayName = response['name'] ?? '';
           _username = response['username'] ?? '';
@@ -93,17 +126,9 @@ class _ProfilePageState extends State<ProfilePage> {
             _joinDate = DateTime.parse(response['join_date']);
           }
 
-          if (response['following'] != null) {
-            _followingList = (response['following'] as List)
-                .map((f) => FollowingElement.fromJson(f))
-                .toList();
-          }
-
-          if (response['available_sports'] != null) {
-            _availableSports = (response['available_sports'] as List)
-                .map((s) => CabangOlahragaElement.fromJson(s))
-                .toList();
-          }
+          _followingList = followingList;
+          _availableSports = availableSports;
+          _allSportsMap = allSportsMap;
 
           if (response['recentActivity'] != null) {
             _recentActivity = (response['recentActivity'] as List)
@@ -595,19 +620,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildSportChip(FollowingElement follow) {
-    final sport = _availableSports.firstWhere(
-          (s) => s.id == follow.cabangOlahraga,
-      orElse: () => CabangOlahragaElement(id: '', name: 'Unknown Sport'),
-    );
+    final sportName = _allSportsMap[follow.cabangOlahraga] ?? 'Unknown Sport';
 
     return Chip(
       backgroundColor: const Color(0xFF38BDF8),
       deleteIconColor: Colors.white,
       label: Text(
-        sport.name,
+        sportName,
         style: const TextStyle(color: Colors.white),
       ),
-      onDeleted: () => _unfollowSport(follow.id, sport.name),
+      onDeleted: () => _unfollowSport(follow.id, sportName),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
