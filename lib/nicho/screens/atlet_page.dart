@@ -16,9 +16,12 @@ class AtletPage extends StatefulWidget {
 class _AtletPageState extends State<AtletPage> {
   final String url = "http://127.0.0.1:8000/atlet/json/";
 
+  // Variabel state utk filter
+  String _searchQuery = "";
+  String _selectedDiscipline = "All";
+
   Future<List<AtletList>> fetchAtlet(CookieRequest request) async {
     final response = await request.get(url);
-
     List<AtletList> listAtlet = [];
     for (var d in response) {
       if (d != null) {
@@ -31,12 +34,13 @@ class _AtletPageState extends State<AtletPage> {
   @override
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
-
-    // Anggap user admin jika sudah login (dpt diperketat lagi nnti)
     final bool isAdmin = request.loggedIn;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('List of Athletes')),
+      appBar: AppBar(
+        title: const Text('ParaWorld Athletes'),
+        backgroundColor: const Color(0xFF3BC3FD),
+      ),
       floatingActionButton: isAdmin
           ? FloatingActionButton(
               onPressed: () {
@@ -52,183 +56,128 @@ class _AtletPageState extends State<AtletPage> {
               child: const Icon(Icons.add),
             )
           : null,
-      body: FutureBuilder<List<AtletList>>(
-        future: fetchAtlet(request),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No athlete data"));
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                var item = snapshot.data![index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+      body: Column(
+        children: [
+          // BAGIAN SEARCH & FILTER
+          Container(
+            padding: const EdgeInsets.all(12.0),
+            color: Colors.white,
+            child: Column(
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: "Search athlete name...",
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
-                  child: Column(
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value.toLowerCase();
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+
+          // DAFTAR ATLET
+          Expanded(
+            child: FutureBuilder<List<AtletList>>(
+              future: fetchAtlet(request),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text("No athlete data"));
+                } else {
+                  // Ambil list unik discipline utk dropdown filter
+                  List<String> disciplines =
+                      ["All"] +
+                      snapshot.data!.map((e) => e.discipline).toSet().toList();
+
+                  // LOGIC FILTERING
+                  List<AtletList> filteredList = snapshot.data!.where((item) {
+                    bool matchesSearch = item.name.toLowerCase().contains(
+                      _searchQuery,
+                    );
+                    bool matchesDiscipline =
+                        _selectedDiscipline == "All" ||
+                        item.discipline == _selectedDiscipline;
+                    return matchesSearch && matchesDiscipline;
+                  }).toList();
+
+                  return Column(
                     children: [
-                      ListTile(
-                        title: Text(
-                          item.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text("${item.country} - ${item.discipline}"),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                      // Dropdown filter discipline
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
                           children: [
-                            // Total Medali
-                            Text(
-                              "${item.totalMedals} Medals",
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            // Row untuk Gold, Silver, Bronze
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (item.goldCount > 0) ...[
-                                  const Text("🥇"),
-                                  Text(
-                                    "${item.goldCount} ",
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                                if (item.silverCount > 0) ...[
-                                  const Text("🥈"),
-                                  Text(
-                                    "${item.silverCount} ",
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                                if (item.bronzeCount > 0) ...[
-                                  const Text("🥉"),
-                                  Text(
-                                    "${item.bronzeCount} ",
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                              ],
+                            const Text("Filter by Sport: "),
+                            const SizedBox(width: 10),
+                            DropdownButton<String>(
+                              value: _selectedDiscipline,
+                              items: disciplines.map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedDiscipline = newValue!;
+                                });
+                              },
                             ),
                           ],
                         ),
-                        onTap: () {
-                          // Logic Guest vs Member
-                          if (request.loggedIn) {
-                            // Jika sudah login, ke halaman detail
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DetailAtletPage(
-                                  id: item.pk,
-                                  name: item.name,
-                                ),
-                              ),
-                            );
-                          } else {
-                            // Jika belum login (Guest), tampilkan pesan
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Login untuk melihat detail atlet!",
-                                ),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
                       ),
-                      // Tombol EDIT & DELETE (hny jika Admin)
-                      if (isAdmin)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8.0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              // Tombol Edit
-                              TextButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      // Kirim data item ke form agar jadi mode Edit
-                                      builder: (context) =>
-                                          AtletFormPage(atlet: item),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(
-                                  Icons.edit,
-                                  size: 18,
-                                  color: Colors.orange,
-                                ),
-                                label: const Text(
-                                  "Edit",
-                                  style: TextStyle(color: Colors.orange),
-                                ),
+
+                      // ListView yg sudah difilter
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredList.length,
+                          itemBuilder: (context, index) {
+                            var item = filteredList[index];
+                            return Card(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
                               ),
-
-                              const SizedBox(width: 8),
-
-                              // Tombol Delete
-                              TextButton.icon(
-                                onPressed: () async {
-                                  // Konfirmasi Hapus
-                                  bool confirm =
-                                      await showDialog(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text("Hapus Atlet"),
-                                          content: Text(
-                                            "Yakin ingin menghapus ${item.name}?",
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, false),
-                                              child: const Text("Batal"),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context, true),
-                                              child: const Text(
-                                                "Hapus",
-                                                style: TextStyle(
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ) ??
-                                      false;
-
-                                  if (confirm) {
-                                    final response = await request.postJson(
-                                      "http://127.0.0.1:8000/atlet/delete-ajax/${item.pk}/",
-                                      jsonEncode({}),
-                                    );
-
-                                    if (context.mounted) {
-                                      if (response['status'] == 'success') {
-                                        setState(() {}); // Refresh list
-                                        ScaffoldMessenger.of(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Column(
+                                children: [
+                                  ListTile(
+                                    title: Text(
+                                      item.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      "${item.country} - ${item.discipline}",
+                                    ),
+                                    trailing: medalWidget(item),
+                                    onTap: () {
+                                      if (request.loggedIn) {
+                                        Navigator.push(
                                           context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text("Berhasil dihapus!"),
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                DetailAtletPage(
+                                                  id: item.pk,
+                                                  name: item.name,
+                                                ),
                                           ),
                                         );
                                       } else {
@@ -236,34 +185,128 @@ class _AtletPageState extends State<AtletPage> {
                                           context,
                                         ).showSnackBar(
                                           const SnackBar(
-                                            content: Text("Gagal menghapus!"),
+                                            content: Text(
+                                              "Login to view athlete details!",
+                                            ),
+                                            backgroundColor: Colors.red,
                                           ),
                                         );
                                       }
-                                    }
-                                  }
-                                },
-                                icon: const Icon(
-                                  Icons.delete,
-                                  size: 18,
-                                  color: Colors.red,
-                                ),
-                                label: const Text(
-                                  "Delete",
-                                  style: TextStyle(color: Colors.red),
-                                ),
+                                    },
+                                  ),
+                                  if (isAdmin)
+                                    adminButtons(context, item, request),
+                                ],
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
+                      ),
                     ],
-                  ),
-                );
+                  );
+                }
               },
-            );
-          }
-        },
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  // Widget helper utk medali
+  Widget medalWidget(AtletList item) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          "${item.totalMedals} Medals",
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (item.goldCount > 0) Text("🥇${item.goldCount} "),
+            if (item.silverCount > 0) Text("🥈${item.silverCount} "),
+            if (item.bronzeCount > 0) Text("🥉${item.bronzeCount} "),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Widget helper utk tombol admin
+  Widget adminButtons(
+    BuildContext context,
+    AtletList item,
+    CookieRequest request,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton.icon(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AtletFormPage(atlet: item),
+              ),
+            ),
+            icon: const Icon(Icons.edit, size: 18, color: Colors.orange),
+            label: const Text("Edit", style: TextStyle(color: Colors.orange)),
+          ),
+          TextButton.icon(
+            onPressed: () => deleteAtlet(context, item, request),
+            icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+            label: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Fungsi delete
+  Future<void> deleteAtlet(
+    BuildContext context,
+    AtletList item,
+    CookieRequest request,
+  ) async {
+    bool confirm =
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Delete Athlete"),
+            content: Text("Are you sure you want to delete ${item.name}?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (confirm) {
+      final response = await request.postJson(
+        "http://127.0.0.1:8000/atlet/delete-ajax/${item.pk}/",
+        jsonEncode({}),
+      );
+      if (response['status'] == 'success') {
+        setState(() {});
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Successfully deleted!")));
+      }
+    }
   }
 }
