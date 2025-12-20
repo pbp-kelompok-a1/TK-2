@@ -79,7 +79,7 @@ class _CommentWidgetState extends State<CommentWidget> {
       final request = context.read<CookieRequest>();
 
       final response = await request.post(
-        '${widget.baseUrl}/comment/add/${widget.newsId}/',
+        '${widget.baseUrl}/comment/add_flutter/${widget.newsId}/',
         {'content': content},
       );
 
@@ -119,7 +119,7 @@ class _CommentWidgetState extends State<CommentWidget> {
       final request = context.read<CookieRequest>();
 
       final response = await request.post(
-        '${widget.baseUrl}/comment/edit/$commentId/',
+        '${widget.baseUrl}/comment/edit_flutter/$commentId/',
         {'content': newContent},
       );
 
@@ -171,7 +171,7 @@ class _CommentWidgetState extends State<CommentWidget> {
       final request = context.read<CookieRequest>();
 
       final response = await request.post(
-        '${widget.baseUrl}/comment/delete/$commentId/',
+        '${widget.baseUrl}/comment/delete_flutter/$commentId/',
         {},
       );
 

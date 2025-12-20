@@ -17,7 +17,7 @@ class NewsEntry {
     String? thumbnail;
     Author author;
     DateTime createdAt;
-    dynamic cabangOlahraga;
+    dynamic? cabangOlahraga;
 
     NewsEntry({
         required this.id,
@@ -25,10 +25,10 @@ class NewsEntry {
         required this.content,
         required this.category,
         required this.categoryDisplay,
-        required this.thumbnail,
+        this.thumbnail,
         required this.author,
         required this.createdAt,
-        required this.cabangOlahraga,
+        this.cabangOlahraga,
     });
 
     factory NewsEntry.fromJson(Map<String, dynamic> json) => NewsEntry(

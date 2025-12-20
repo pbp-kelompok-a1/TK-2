@@ -71,7 +71,7 @@ class NewsEntryCard extends StatelessWidget {
 
                   // Ingat: Web pakai 127.0.0.1, Emulator pakai 10.0.2.2
                   final proxyUrl =
-                      "http://127.0.0.1:8000/proxy-image/?url=$encodedUrl";
+                      "http://localhost:8000/proxy-image/?url=$encodedUrl";
 
                   return Image.network(
                     proxyUrl,
