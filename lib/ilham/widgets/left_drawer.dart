@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 import 'package:tk2/bayu/screens/event_page.dart';
+import 'package:tk2/delila/screens/news_entry_list.dart';
 import 'package:tk2/ilham/screens/test_comment.dart';
 
 class LeftDrawer extends StatefulWidget {
@@ -125,7 +126,12 @@ class _LeftDrawerState extends State<LeftDrawer> {
             leading: const Icon(Icons.article_outlined),
             title: const Text('News'),
             onTap: () {
-              // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NewsEntryListPage(),
+                ),
+              );
             },
           ),
           ListTile(
