@@ -9,7 +9,7 @@ String atletListToJson(List<AtletList> data) =>
 class AtletList {
   int pk;
   String name;
-  String shortName;
+  String? shortName;
   String discipline;
   String country;
   bool isVisible;
@@ -17,11 +17,16 @@ class AtletList {
   int silverCount;
   int bronzeCount;
   int totalMedals;
+  String? gender;
+  String? birthDate;
+  String? birthPlace;
+  String? birthCountry;
+  String? nationality;
 
   AtletList({
     required this.pk,
     required this.name,
-    required this.shortName,
+    this.shortName,
     required this.discipline,
     required this.country,
     required this.isVisible,
@@ -29,19 +34,29 @@ class AtletList {
     required this.silverCount,
     required this.bronzeCount,
     required this.totalMedals,
+    this.gender,
+    this.birthDate,
+    this.birthPlace,
+    this.birthCountry,
+    this.nationality,
   });
 
   factory AtletList.fromJson(Map<String, dynamic> json) => AtletList(
     pk: json["pk"],
     name: json["name"],
-    shortName: json["short_name"] ?? "",
+    shortName: json["short_name"],
     discipline: json["discipline"] ?? "General",
     country: json["country"],
-    isVisible: json["is_visible"],
-    goldCount: json["gold_count"],
-    silverCount: json["silver_count"],
-    bronzeCount: json["bronze_count"],
-    totalMedals: json["total_medals"],
+    isVisible: json["is_visible"] ?? true,
+    goldCount: json["gold_count"] ?? 0,
+    silverCount: json["silver_count"] ?? 0,
+    bronzeCount: json["bronze_count"] ?? 0,
+    totalMedals: json["total_medals"] ?? 0,
+    gender: json["gender"],
+    birthDate: json["birth_date"],
+    birthPlace: json["birth_place"],
+    birthCountry: json["birth_country"],
+    nationality: json["nationality"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -55,5 +70,10 @@ class AtletList {
     "silver_count": silverCount,
     "bronze_count": bronzeCount,
     "total_medals": totalMedals,
+    "gender": gender,
+    "birth_date": birthDate,
+    "birth_place": birthPlace,
+    "birth_country": birthCountry,
+    "nationality": nationality,
   };
 }
