@@ -7,10 +7,46 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:tk2/ilham/screens/test_comment.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 import 'package:tk2/bayu/screens/event_page.dart';
+import 'package:tk2/delila/screens/news_entry_list.dart';
 import 'package:tk2/ilham/screens/test_comment.dart';
 
-class LeftDrawer extends StatelessWidget {
+class LeftDrawer extends StatefulWidget {
   const LeftDrawer({super.key});
+
+  @override
+  State<LeftDrawer> createState() => _LeftDrawerState();
+}
+
+class _LeftDrawerState extends State<LeftDrawer> {
+  String _name = "User Placeholder";
+  String? _profilePictureUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    final request = context.read<CookieRequest>();
+
+    if (!request.loggedIn) return;
+
+    try {
+      final response = await request.get('http://localhost:8000/following/profile2/');
+
+      if (!mounted) return;
+
+      if (response != null && response['success'] == true) {
+        setState(() {
+          _name = response['name'] ?? "User Placeholder";
+          _profilePictureUrl = response['profilePicture'];
+        });
+      }
+    } catch (e) {
+      // Silent error handling to not disrupt UI
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,15 +60,20 @@ class LeftDrawer extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 35,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 50, color: Colors.grey),
+                  backgroundImage: _profilePictureUrl != null
+                      ? NetworkImage(_profilePictureUrl!)
+                      : null,
+                  child: _profilePictureUrl == null
+                      ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                      : null,
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  "User Placeholder",
-                  style: TextStyle(
+                Text(
+                  _name,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -58,10 +99,12 @@ class LeftDrawer extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text("My Profile"),
-              onTap: () {
+              onTap: () async {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(),
+                  ),
                 );
               },
             ),
@@ -84,7 +127,12 @@ class LeftDrawer extends StatelessWidget {
             leading: const Icon(Icons.article_outlined),
             title: const Text('News'),
             onTap: () {
-              // TODO
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NewsEntryListPage(),
+                ),
+              );
             },
           ),
           ListTile(
