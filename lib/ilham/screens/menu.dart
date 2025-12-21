@@ -584,7 +584,7 @@ class MyHomePage extends StatelessWidget {
 
                   // Logic URL dengan Proxy
                   final encodedUrl = Uri.encodeComponent(rawThumbnail);
-                  final proxyUrl = "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/proxy-image/?url=$encodedUrl";
+                  final proxyUrl = "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/proxy-image/?url=$encodedUrl";
 
                   return Image.network(
                     proxyUrl,
