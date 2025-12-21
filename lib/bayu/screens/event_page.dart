@@ -17,32 +17,86 @@ class EventPage extends StatefulWidget {
 
 class _EventPageState extends State<EventPage> {
   String _selectedFilter = "All Events";
+  late Future<List<Events>> _eventsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventsFuture = fetchEvents(context.read<CookieRequest>());
+  }
+
+  void _refreshEvents() {
+    setState(() {
+      _eventsFuture = fetchEvents(context.read<CookieRequest>());
+    });
+  }
 
   Future<List<Events>> fetchEvents(CookieRequest request) async {
-    final response = await request.get('http://127.0.0.1:8000/events/json/');
+    try {
+      final response = await request.get('http://localhost:8000/events/json/');
+      print("RAW DATA FROM DJANGO: $response");
 
-    var data = response;
+      if (response is! List) return [];
 
-    List<Events> listEvents = [];
-    for (var d in data) {
-      if (d != null) {
+      List<Events> listEvents = [];
+      for (var d in response) {
         listEvents.add(Events.fromJson(d));
       }
+      print("PARSED EVENTS COUNT: ${listEvents.length}");
+      return listEvents;
+    } catch (e) {
+      print("PARSING ERROR: $e");
+      return [];
     }
+  }
 
-    return listEvents;
+  Future<void> _handleDelete(String eventId) async {
+    final request = context.read<CookieRequest>();
+
+    // Debug
+    print("Attempting to delete event: $eventId");
+
+    final response = await request.postJson(
+      "http://localhost:8000/events/$eventId/delete-flutter/",
+      "{}",
+    );
+    if (mounted) {
+      if (response['status'] == 'success') {
+        _refreshEvents();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Event deleted"), backgroundColor: Colors.green),
+        );
+        _refreshEvents();
+      } else {
+        print("Delete failed: ${response['message']}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${response['message']}"), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
+    final request = context.read<CookieRequest>();
+
+    final int currentUserId =
+    (request.jsonData != null && request.jsonData.containsKey('user_id'))
+        ? int.parse(request.jsonData['user_id'].toString())
+        : 0;
+
+    final bool isAdmin = (request.jsonData != null && request.jsonData.containsKey('is_staff'))
+        ? request.jsonData['is_staff']
+        : false;
+
+    final bool isLoggedIn = request.loggedIn;
 
     return Scaffold(
       drawer: const LeftDrawer(),
       appBar: const MainNavbar(),
-      body: FutureBuilder (
-        future: fetchEvents(request),
-        builder: (context, AsyncSnapshot snapshot) {
+      body: FutureBuilder<List<Events>> (
+        future: _eventsFuture,
+        builder: (context, AsyncSnapshot<List<Events>> snapshot) {
           if (snapshot.data == null) {
             return const Center(child: CircularProgressIndicator());
           } else {
@@ -61,16 +115,16 @@ class _EventPageState extends State<EventPage> {
               List<Events> events = snapshot.data!;
 
               if (_selectedFilter == "Global Events") {
-                events = events.where((e) => e.eventType == "Global").toList();
+                events = events.where((e) => e.eventType.toLowerCase() == "global").toList();
               } else if (_selectedFilter == "Community Events") {
-                events = events.where((e) => e.eventType == "Community").toList();
+                events = events.where((e) => e.eventType.toLowerCase() == "community").toList();
               }
 
               return SingleChildScrollView(
                 child: Column (
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildBanner(),
+                    _buildBanner(isLoggedIn),
                     const SizedBox(height: 20),
 
                     _buildTabsSection(events.length),
@@ -79,7 +133,7 @@ class _EventPageState extends State<EventPage> {
                     Padding (
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column (
-                        children: events.map((event) => _buildCard(event)).toList(),
+                        children: events.map((event) => _buildCard(event, currentUserId, isAdmin)).toList(),
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -93,7 +147,7 @@ class _EventPageState extends State<EventPage> {
     );
   }
 
-  Widget _buildBanner() {
+  Widget _buildBanner(bool isLoggedIn) {
     return Container (
       margin: const EdgeInsets.all(20),
       width: double.infinity,
@@ -130,23 +184,31 @@ class _EventPageState extends State<EventPage> {
           ),
 
           const SizedBox(height: 20),
-          ElevatedButton.icon (
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const EventFormPage()),
-              ).then((_) {
-                setState(() {});
-              });
-            },
 
-            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-            label: const Text("Create Community Tournament Community Tournaments.", style: TextStyle(color: Colors.white)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00C853),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          if (isLoggedIn)
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EventFormPage()),
+                ).then((value) {
+                  if (value == true) {
+                    _refreshEvents();
+                  }
+                });
+              },
+              icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+              label: const Text("Create Tournament", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00C853),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            )
+          else
+            const Text(
+              "Log in to create your own community tournament!",
+              style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
             ),
-          ),
         ],
       ),
     );
@@ -201,8 +263,10 @@ class _EventPageState extends State<EventPage> {
   }
 
 
-  Widget _buildCard(Events event) {
-    bool isGlobal = event.eventType == "Global";
+  Widget _buildCard(Events event, int currentUserId, bool isAdmin) {
+
+    bool isGlobal = event.eventType.toLowerCase() == "global";
+    bool canModify = isAdmin || (currentUserId == event.creatorId);
 
     // global menggunakan biru, community menggunakan hijau
     Color badgeColor = isGlobal ? const Color(0xFFE3F2FD) : const Color(0xFFC8E6C9);
@@ -273,7 +337,7 @@ class _EventPageState extends State<EventPage> {
                     ),
 
                     Text (
-                      "By ${event.creator}",
+                      "By ${event.creatorName}",
                       style: const TextStyle(color: Colors.grey, fontSize: 10),
                     ),
                   ],
@@ -321,14 +385,39 @@ class _EventPageState extends State<EventPage> {
                 const SizedBox(height: 10),
 
                 // Edit/Delete button
-                const Row (
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text("Edit", style: TextStyle(color: Colors.blue, fontSize: 12)),
-                    SizedBox(width: 10),
-                    Text("Delete", style: TextStyle(color: Colors.red, fontSize: 12)),
-                  ],
-                )
+                if (canModify)
+                  const Divider(),
+                if (canModify)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EventFormPage(existingEvent: event), // Pass data
+                              ),
+                            ).then((value) {
+                              if (value == true) {
+                                _refreshEvents();
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.edit, size: 16),
+                          label: const Text("Edit"),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton.icon(
+                          onPressed: () => _handleDelete(event.id), // Calls the function below
+                          icon: const Icon(Icons.delete, size: 16, color: Colors.red),
+                          label: const Text("Delete", style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

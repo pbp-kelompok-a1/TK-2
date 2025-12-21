@@ -4,7 +4,6 @@ import 'package:tk2/ilham/screens/menu.dart';
 import 'package:tk2/ilham/screens/login.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
-import 'package:tk2/ilham/screens/test_comment.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 import 'package:tk2/bayu/screens/event_page.dart';
 import 'package:tk2/delila/screens/news_entry_list.dart';
@@ -32,7 +31,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
     if (!request.loggedIn) return;
 
     try {
-      final response = await request.get('http://localhost:8000/following/profile2/');
+      final response = await request.get('https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/following/profile2/');
 
       if (!mounted) return;
 
@@ -160,20 +159,6 @@ class _LeftDrawerState extends State<LeftDrawer> {
             },
           ),
 
-          ListTile(
-            leading: const Icon(Icons.comment_outlined),
-            title: const Text('test comment'),
-            onTap: () {
-              // TODO
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TestCommentPage(),
-                ),
-              );
-            },
-          ),
-
           if (Provider.of<CookieRequest>(context, listen: false).loggedIn) ...[
             const Divider(height: 1, thickness: 0.3, color: Colors.black54),
 
@@ -184,7 +169,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
                 await Provider.of<CookieRequest>(
                   context,
                   listen: false,
-                ).logout("http://localhost:8000/auth/logout/");
+                ).logout("https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/auth/logout/");
 
                 if (!context.mounted) return;
 
