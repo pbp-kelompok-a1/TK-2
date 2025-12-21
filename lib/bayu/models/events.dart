@@ -20,7 +20,8 @@ class Events {
   String eventType;
   int creatorId;
   String creatorName;
-  String cabangOlahraga;
+  String? cabangOlahraga;
+  String? cabangOlahragaName;
   DateTime createdAt;
 
   Events({
@@ -36,6 +37,7 @@ class Events {
     required this.creatorId,
     required this.creatorName,
     required this.cabangOlahraga,
+    this.cabangOlahragaName,
     required this.createdAt,
   });
 
@@ -51,7 +53,8 @@ class Events {
     eventType: json["event_type"],
     creatorId: json["creator"] != null ? json["creator"]["id"] ?? 0 : 0,
     creatorName: json["creator"] != null ? json["creator"]["username"] ?? "Unknown" : "Unknown",
-    cabangOlahraga: json["cabangOlahraga"],
+    cabangOlahraga: json["cabangOlahraga"]?.toString(),
+    cabangOlahragaName: json["cabangOlahragaName"] ?? "General",
     createdAt: DateTime.parse(json["created_at"]),
   );
 
@@ -68,6 +71,7 @@ class Events {
     "creator": creatorId,
     "creatorName": creatorName,
     "cabangOlahraga": cabangOlahraga,
+    "cabangOlahragaName": cabangOlahragaName,
     "created_at": createdAt.toIso8601String(),
   };
 }

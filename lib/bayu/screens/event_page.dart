@@ -273,6 +273,9 @@ class _EventPageState extends State<EventPage> {
     Color badgeTextColor = isGlobal ? const Color(0xFF1565C0) : const Color(0xFF2E7D32);
     String badgeText = isGlobal ? "Global Event" : "Community Tournament";
 
+    Color sportsBadgeColor = Colors.orange.shade50;
+    Color sportsTextColor = Colors.orange.shade800;
+
     // cek kalo ada image apa tidak
     bool hasImage = event.pictureUrl != null && event.pictureUrl!.isNotEmpty;
 
@@ -323,17 +326,36 @@ class _EventPageState extends State<EventPage> {
                 Row (
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: badgeColor, // Uses the variable we made at top
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: badgeColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text (
+                            badgeText,
+                            style: TextStyle(color: badgeTextColor, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
 
-                      child: Text (
-                        badgeText,
-                        style: TextStyle(color: badgeTextColor, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
+                        // NEW SPORTS BRANCH BADGE
+                        if (event.cabangOlahraga != null && event.cabangOlahraga!.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: sportsBadgeColor,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: sportsTextColor.withOpacity(0.3)),
+                            ),
+                            child: Text (
+                              event.cabangOlahragaName ?? "Sport Info",
+                              style: TextStyle(color: sportsTextColor, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
                     ),
 
                     Text (
