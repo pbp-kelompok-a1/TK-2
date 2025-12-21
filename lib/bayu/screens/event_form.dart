@@ -6,9 +6,11 @@ import 'package:provider/provider.dart';
 import '../../ilham/widgets/left_drawer.dart';
 import '../../ilham/widgets/navbar.dart';
 import '../../abi/models/CabangOlahraga.dart';
+import '../models/events.dart';
 
 class EventFormPage extends StatefulWidget {
-  const EventFormPage({super.key});
+  final Events? existingEvent;
+  const EventFormPage({super.key, this.existingEvent});
 
   @override
   State<EventFormPage> createState() => _EventFormPageState();
@@ -36,27 +38,43 @@ class _EventFormPageState extends State<EventFormPage> {
   @override
   void initState() {
     super.initState();
-    // Ambil data cabang olahraga begitu halaman dibuka
-    Future.microtask(() => _fetchSportBranches());
+    _fetchSportBranches().then((_) {
+      if (widget.existingEvent != null) {
+        setState(() {
+          _selectedSportId = widget.existingEvent!.cabangOlahraga;
+        });
+      }
+    });
+
+    if (widget.existingEvent != null) {
+      _title = widget.existingEvent!.title;
+      _description = widget.existingEvent!.description;
+      _location = widget.existingEvent!.location;
+      _pictureUrl = widget.existingEvent!.pictureUrl;
+      _selectedSportId = widget.existingEvent!.cabangOlahraga;
+      _selectedDate = widget.existingEvent!.startTime;
+      _selectedTime = TimeOfDay.fromDateTime(widget.existingEvent!.startTime);
+    }
   }
+
+  bool _isLoadingSports = true;
 
   Future<void> _fetchSportBranches() async {
     final request = context.read<CookieRequest>();
 
     try {
-      final response = await request.get('http://127.0.0.1:8000/showJSONCabangOlahraga/');
+      final response = await request.get('http://127.0.0.1:8000/following/showJSONCabangOlahraga/');
 
-      var listData = response['cabangOlahraga'];
-      List<CabangOlahragaElement> tempList = [];
+      if (response != null && response['cabangOlahraga'] != null) {
+        CabangOlahraga data = CabangOlahraga.fromJson(response);
 
-      for (var d in listData) {
-        tempList.add(CabangOlahragaElement.fromJson(d));
+        setState(() {
+          _sportList = data.cabangOlahraga;
+          _isLoadingSports = false;
+        });
       }
-
-      setState(() {
-        _sportList = tempList;
-      });
     } catch (e) {
+      setState(() => _isLoadingSports = false);
       debugPrint("Gagal mengambil data cabang olahraga: $e");
     }
   }
@@ -88,6 +106,10 @@ class _EventFormPageState extends State<EventFormPage> {
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
 
+    // DEBUG AUTH FLUTTER
+    debugPrint("FLUTTER loggedIn: ${request.loggedIn}");
+    debugPrint("FLUTTER jsonData: ${request.jsonData}");
+
     return Scaffold(
       appBar: const MainNavbar(),
       drawer: const LeftDrawer(),
@@ -100,6 +122,7 @@ class _EventFormPageState extends State<EventFormPage> {
             children: [
               // --- INPUT JUDUL ---
               TextFormField(
+                initialValue: _title,
                 decoration: InputDecoration(
                   labelText: "Title",
                   hintText: "Masukkan nama turnamen",
@@ -121,6 +144,7 @@ class _EventFormPageState extends State<EventFormPage> {
 
               // --- INPUT DESKRIPSI ---
               TextFormField(
+                initialValue: _description,
                 decoration: InputDecoration(
                   labelText: "Description",
                   hintText: "Deskripsi detail acara...",
@@ -143,6 +167,7 @@ class _EventFormPageState extends State<EventFormPage> {
 
               // --- INPUT LOKASI ---
               TextFormField(
+                initialValue: _location,
                 decoration: InputDecoration(
                   labelText: "Location",
                   hintText: "Lokasi pertandingan",
@@ -165,15 +190,14 @@ class _EventFormPageState extends State<EventFormPage> {
               // --- DROPDOWN CABANG OLAHRAGA  ---
               DropdownButtonFormField<String>(
                 value: _selectedSportId,
-                hint: const Text("Pilih Cabang Olahraga"),
+                hint: Text(_isLoadingSports ? "Loading categories..." : "Pilih Cabang Olahraga"),
 
-                // INI PERBAIKANNYA: Pindahkan border ke dalam InputDecoration
                 decoration: InputDecoration(
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                 ),
 
-                items: _sportList.map((CabangOlahragaElement item) {
+                items: _isLoadingSports ? null : _sportList.map((CabangOlahragaElement item) {
                   return DropdownMenuItem<String>(
                     value: item.id, // ID yang akan dikirim ke backend
                     child: Text(item.name), // Nama yang dilihat user
@@ -194,6 +218,7 @@ class _EventFormPageState extends State<EventFormPage> {
 
               // --- INPUT URL GAMBAR ---
               TextFormField(
+                initialValue: _pictureUrl,
                 decoration: InputDecoration(
                   labelText: "Picture URL",
                   hintText: "http://example.com/image.png",
@@ -256,10 +281,14 @@ class _EventFormPageState extends State<EventFormPage> {
                       _selectedTime.hour, _selectedTime.minute,
                     );
 
+                    String url = "http://localhost:8000/events/create-flutter/";
+                    if (widget.existingEvent != null) {
+                      url = "http://localhost:8000/events/${widget.existingEvent!.id}/edit-flutter/";
+                    }
+
                     // 2. Kirim ke Django
-                    // TODO: Pastikan URL ini sesuai dengan path di urls.py ('event/create-flutter/')
                     final response = await request.postJson(
-                      "http://10.0.2.2:8000/event/create-flutter/",
+                      url,
                       jsonEncode(<String, dynamic>{
                         'title': _title,
                         'description': _description,
@@ -273,14 +302,16 @@ class _EventFormPageState extends State<EventFormPage> {
                     // 3. Cek Response
                     if (context.mounted) {
                       if (response['status'] == 'success') {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text("Event berhasil dibuat!"),
+                        String msg = widget.existingEvent == null ? "Event berhasil dibuat!" : "Event berhasil diperbarui!";
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(msg),
                           backgroundColor: Colors.green,
                         ));
-                        Navigator.pop(context); // Kembali ke halaman list
+
+                        Navigator.pop(context, true);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text("Gagal: ${response['message']}"),
+                          content: Text("Gagal: ${response['message'] ?? 'Terjadi kesalahan'}"),
                           backgroundColor: Colors.red,
                         ));
                       }

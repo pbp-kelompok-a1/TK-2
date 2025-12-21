@@ -18,7 +18,8 @@ class Events {
   DateTime startTime;
   DateTime? endTime;
   String eventType;
-  int creator;
+  int creatorId;
+  String creatorName;
   String cabangOlahraga;
   DateTime createdAt;
 
@@ -32,7 +33,8 @@ class Events {
     required this.startTime,
     required this.endTime,
     required this.eventType,
-    required this.creator,
+    required this.creatorId,
+    required this.creatorName,
     required this.cabangOlahraga,
     required this.createdAt,
   });
@@ -47,7 +49,8 @@ class Events {
     startTime: DateTime.parse(json["start_time"]),
     endTime: json["end_time"] == null ? null : DateTime.parse(json["end_time"]),
     eventType: json["event_type"],
-    creator: json["creator"],
+    creatorId: json["creator"] != null ? json["creator"]["id"] ?? 0 : 0,
+    creatorName: json["creator"] != null ? json["creator"]["username"] ?? "Unknown" : "Unknown",
     cabangOlahraga: json["cabangOlahraga"],
     createdAt: DateTime.parse(json["created_at"]),
   );
@@ -62,7 +65,8 @@ class Events {
     "start_time": startTime.toIso8601String(),
     "end_time": endTime?.toIso8601String(),
     "event_type": eventType,
-    "creator": creator,
+    "creator": creatorId,
+    "creatorName": creatorName,
     "cabangOlahraga": cabangOlahraga,
     "created_at": createdAt.toIso8601String(),
   };
