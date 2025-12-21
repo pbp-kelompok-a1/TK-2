@@ -16,7 +16,6 @@ class AtletFormPage extends StatefulWidget {
 
 class _AtletFormPageState extends State<AtletFormPage> {
   final _formKey = GlobalKey<FormState>();
-
   late TextEditingController _nameController;
   late TextEditingController _shortNameController;
   late TextEditingController _countryController;
@@ -204,10 +203,11 @@ class _AtletFormPageState extends State<AtletFormPage> {
                             content: Text("Data saved successfully!"),
                           ),
                         );
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AtletPage(),
+                        Navigator.pop(context, true);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Error: ${response['message']}"),
                           ),
                         );
                       }

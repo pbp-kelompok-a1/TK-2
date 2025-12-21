@@ -39,54 +39,83 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
 
   // 2. Pop up form edit
   void showEditDialog(Map<String, dynamic> medali) {
-    TextEditingController typeController = TextEditingController(
-      text: medali['medal_type'],
-    );
+    String selectedType = medali['medal_type'];
     TextEditingController eventController = TextEditingController(
       text: medali['event'],
+    );
+    TextEditingController dateController = TextEditingController(
+      text: medali['medal_date'],
     );
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Edit Medal"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: typeController,
-              decoration: const InputDecoration(labelText: "Medal Type"),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text("Edit Medal"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: selectedType,
+                items: ["Gold Medal", "Silver Medal", "Bronze Medal"]
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
+                onChanged: (val) => setStateDialog(() => selectedType = val!),
+                decoration: const InputDecoration(labelText: "Medal Type"),
+              ),
+              TextField(
+                controller: eventController,
+                decoration: const InputDecoration(labelText: "Event"),
+              ),
+              TextField(
+                controller: dateController,
+                readOnly: true,
+                onTap: () async {
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.parse(medali['medal_date']),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setStateDialog(
+                      () =>
+                          dateController.text = picked.toString().split(' ')[0],
+                    );
+                  }
+                },
+                decoration: const InputDecoration(
+                  labelText: "Medal Date",
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
-            TextField(
-              controller: eventController,
-              decoration: const InputDecoration(labelText: "Event"),
+            ElevatedButton(
+              onPressed: () async {
+                final request = context.read<CookieRequest>();
+                final response = await request.post(
+                  "http://127.0.0.1:8000/atlet/edit-medali-flutter/${medali['pk']}/",
+                  jsonEncode({
+                    "medal_type": selectedType,
+                    "event": eventController.text,
+                    "medal_date": dateController.text,
+                  }),
+                );
+                if (response['status'] == 'success') {
+                  Navigator.pop(context);
+                  setState(() {});
+                }
+              },
+              child: const Text("Save"),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final request = context.read<CookieRequest>();
-              final response = await request.post(
-                "http://127.0.0.1:8000/atlet/edit-medali-flutter/${medali['pk']}/",
-                jsonEncode({
-                  "medal_type": typeController.text,
-                  "event": eventController.text,
-                  "medal_date": medali['medal_date'],
-                }),
-              );
-              if (response['status'] == 'success') {
-                Navigator.pop(context);
-                setState(() {}); // Refresh list medali
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
       ),
     );
   }
@@ -115,16 +144,12 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
     );
   }
 
-  // Fungsi utks kirim data ke Django
-  Future<void> addMedal(String type, String event) async {
+  // Fungsi utk kirim data ke Django
+  Future<void> addMedal(String type, String event, String date) async {
     final request = context.read<CookieRequest>();
     final response = await request.post(
       "http://127.0.0.1:8000/atlet/add-medali-flutter/${widget.id}/",
-      jsonEncode({
-        "medal_type": type,
-        "event": event,
-        "medal_date": "2024-01-01",
-      }),
+      jsonEncode({"medal_type": type, "event": event, "medal_date": date}),
     );
     if (response['status'] == 'success') {
       setState(() {});
@@ -136,41 +161,73 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
 
   // Fungsi utk menampilkan pop up form
   void showAddMedalDialog() {
-    TextEditingController typeController = TextEditingController();
+    String selectedType = "Gold Medal"; // Nilai awal
     TextEditingController eventController = TextEditingController();
+    TextEditingController dateController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Add New Medal"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: typeController,
-              decoration: const InputDecoration(
-                labelText: "Medal Type (Gold/Silver/Bronze)",
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text("Add New Medal"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Pakai dropdown agar user tidak asal ngetik, better UX
+              DropdownButtonFormField<String>(
+                initialValue: selectedType,
+                items: ["Gold Medal", "Silver Medal", "Bronze Medal"]
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                    .toList(),
+                onChanged: (val) => setStateDialog(() => selectedType = val!),
+                decoration: const InputDecoration(labelText: "Medal Type"),
               ),
+              TextField(
+                controller: eventController,
+                decoration: const InputDecoration(labelText: "Event Name"),
+              ),
+              TextField(
+                controller: dateController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: "Date",
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+                onTap: () async {
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (picked != null) {
+                    setStateDialog(
+                      () =>
+                          dateController.text = picked.toString().split(' ')[0],
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
-            TextField(
-              controller: eventController,
-              decoration: const InputDecoration(labelText: "Event Name"),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                addMedal(
+                  selectedType,
+                  eventController.text,
+                  dateController.text,
+                );
+              },
+              child: const Text("Add"),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              addMedal(typeController.text, eventController.text);
-            },
-            child: const Text("Add"),
-          ),
-        ],
       ),
     );
   }
@@ -178,8 +235,8 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
   @override
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
-    final bool isAdmin = request.loggedIn;
-
+    final bool isAdmin =
+        request.loggedIn && (request.jsonData['is_admin'] == true);
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7F9), // warna background
       appBar: AppBar(
