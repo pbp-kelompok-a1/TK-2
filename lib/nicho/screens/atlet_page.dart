@@ -14,7 +14,8 @@ class AtletPage extends StatefulWidget {
 }
 
 class _AtletPageState extends State<AtletPage> {
-  final String url = "http://127.0.0.1:8000/atlet/json/";
+  final String url =
+      "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/json/";
 
   // Variabel state utk filter
   String _searchQuery = "";
@@ -309,7 +310,7 @@ class _AtletPageState extends State<AtletPage> {
 
     if (confirm) {
       final response = await request.postJson(
-        "http://127.0.0.1:8000/atlet/delete-ajax/${item.pk}/",
+        "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/delete-ajax/${item.pk}/",
         jsonEncode({}),
       );
       if (response['status'] == 'success') {
