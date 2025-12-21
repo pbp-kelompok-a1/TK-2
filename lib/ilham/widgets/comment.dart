@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:tk2/ilham/models/comment_model.dart'; // Import model dari file terpisah
+import 'package:tk2/ilham/models/comment_model.dart'; 
 
 // Main Comment Widget
 class CommentWidget extends StatefulWidget {
   final int newsId;
-  final String baseUrl; // e.g., 'https://your-domain.com' or 'http://localhost:8000'
+  final String baseUrl; 
 
   const CommentWidget({
     Key? key,
