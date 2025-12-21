@@ -15,9 +15,9 @@ class NewsEntry {
     Category category;
     CategoryDisplay categoryDisplay;
     String? thumbnail;
-    Author author;
+    String author;
     DateTime createdAt;
-    dynamic? cabangOlahraga;
+    dynamic cabangOlahraga;
 
     NewsEntry({
         required this.id,
@@ -38,7 +38,7 @@ class NewsEntry {
         category: categoryValues.map[json["category"]]!,
         categoryDisplay: categoryDisplayValues.map[json["category_display"]]!,
         thumbnail: json["thumbnail"],
-        author: authorValues.map[json["author"]]!,
+        author: json["author"],
         createdAt: DateTime.parse(json["created_at"]),
         cabangOlahraga: json["cabangOlahraga"],
     );
@@ -50,21 +50,21 @@ class NewsEntry {
         "category": categoryValues.reverse[category],
         "category_display": categoryDisplayValues.reverse[categoryDisplay],
         "thumbnail": thumbnail,
-        "author": authorValues.reverse[author],
+        "author": author,
         "created_at": createdAt.toIso8601String(),
         "cabangOlahraga": cabangOlahraga,
     };
 }
 
-enum Author {
-    DELILA,
-    DELILA_ISRINA
-}
+// enum Author {
+//     DELILA,
+//     DELILA_ISRINA
+// }
 
-final authorValues = EnumValues({
-    "delila": Author.DELILA,
-    "delila.isrina": Author.DELILA_ISRINA
-});
+// final authorValues = EnumValues({
+//     "delila": Author.DELILA,
+//     "delila.isrina": Author.DELILA_ISRINA
+// });
 
 enum Category {
     ATHLETE,
