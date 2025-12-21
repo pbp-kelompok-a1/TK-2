@@ -34,7 +34,8 @@ class _AtletPageState extends State<AtletPage> {
   @override
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
-    final bool isAdmin = request.loggedIn;
+    final bool isAdmin =
+        request.loggedIn && (request.jsonData['is_admin'] == true);
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +50,11 @@ class _AtletPageState extends State<AtletPage> {
                   MaterialPageRoute(
                     builder: (context) => const AtletFormPage(),
                   ),
-                );
+                ).then((value) {
+                  if (value == true) {
+                    setState(() {});
+                  }
+                });
               },
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
@@ -248,12 +253,18 @@ class _AtletPageState extends State<AtletPage> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           TextButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AtletFormPage(atlet: item),
-              ),
-            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AtletFormPage(atlet: item),
+                ),
+              ).then((value) {
+                if (value == true) {
+                  setState(() {}); // Refresh list jika sukses edit
+                }
+              });
+            },
             icon: const Icon(Icons.edit, size: 18, color: Colors.orange),
             label: const Text("Edit", style: TextStyle(color: Colors.orange)),
           ),
