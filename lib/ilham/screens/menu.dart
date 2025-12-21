@@ -328,7 +328,7 @@ class MyHomePage extends StatelessWidget {
                 List<Events> eventsList = snapshot.data!.take(6).toList();
 
                 return Container(
-                  height: 220,
+                  height: 280,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 12),
