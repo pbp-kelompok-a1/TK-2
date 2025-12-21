@@ -8,7 +8,6 @@ import 'package:tk2/ilham/screens/test_comment.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 import 'package:tk2/bayu/screens/event_page.dart';
 import 'package:tk2/delila/screens/news_entry_list.dart';
-import 'package:tk2/ilham/screens/test_comment.dart';
 
 class LeftDrawer extends StatefulWidget {
   const LeftDrawer({super.key});
@@ -204,19 +203,6 @@ class _LeftDrawerState extends State<LeftDrawer> {
               },
             ),
           ],
-          ListTile(
-            leading: const Icon(Icons.comment_outlined),
-            title: const Text('test comment'),
-            onTap: () {
-              // TODO
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CommentTestScreen(),
-                ),
-              );
-            },
-          ),
         ],
       ),
     );

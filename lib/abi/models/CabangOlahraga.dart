@@ -30,7 +30,7 @@ class CabangOlahragaElement {
   });
 
   factory CabangOlahragaElement.fromJson(Map<String, dynamic> json) => CabangOlahragaElement(
-    id: json["id"],
+    id: json["id"].toString(),
     name: json["name"],
   );
 

@@ -5,28 +5,24 @@ import 'package:tk2/delila/models/news_entry.dart';
 import 'package:tk2/delila/screens/edit_news_page.dart';
 import 'package:tk2/delila/screens/news_entry_list.dart';
 import 'package:tk2/ilham/widgets/comment.dart';
-import 'dart:convert'; 
+import 'dart:convert';
 import 'dart:typed_data';
 
 class NewsDetailPage extends StatelessWidget {
   final NewsEntry news;
+  final String currentUsername; // 1. Tambah variabel ini
 
-  const NewsDetailPage({super.key, required this.news});
+  // 2. Wajibkan di constructor
+  const NewsDetailPage({
+    super.key, 
+    required this.news, 
+    required this.currentUsername
+  });
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} '
         '${date.year}, ${date.hour.toString().padLeft(2, '0')}:'
@@ -48,7 +44,7 @@ class NewsDetailPage extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 final request = context.read<CookieRequest>();
-                Navigator.pop(context); // Tutup Dialog dulu
+                Navigator.pop(context); 
 
                 final response = await request.postJson(
                   "http://localhost:8000/news/delete-flutter/$newsId/",
@@ -63,9 +59,6 @@ class NewsDetailPage extends StatelessWidget {
                         content: Text("News deleted successfully"),
                       ),
                     );
-
-                    // --- LOGIC BARU: REPLACE HALAMAN ---
-                    // Langsung timpa halaman ini dengan List Page baru agar refresh
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -89,10 +82,15 @@ class NewsDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String authorName = news.author; 
+    
+    // Cek apakah user yang login sama dengan pembuat berita
+    bool isOwner = currentUsername == authorName;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('News Detail'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3BC3FD),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -104,7 +102,6 @@ class NewsDetailPage extends StatelessWidget {
               width: double.infinity,
               height: 200,
               child: () {
-                // 1. Cek apakah thumbnail kosong
                 if (news.thumbnail == null || news.thumbnail!.trim().isEmpty) {
                   return Container(
                     color: Colors.grey[300],
@@ -114,11 +111,8 @@ class NewsDetailPage extends StatelessWidget {
 
                 final rawThumbnail = news.thumbnail!;
 
-                // 2. LOGIC KHUSUS BASE64 (Ini solusi masalahmu!)
                 if (rawThumbnail.startsWith('data:image')) {
                   try {
-                    // Kita harus buang bagian header "data:image/jpeg;base64,"
-                    // dan ambil isinya saja (setelah tanda koma)
                     final base64String = rawThumbnail.split(',').last;
                     Uint8List decodedBytes = base64Decode(base64String);
 
@@ -131,16 +125,11 @@ class NewsDetailPage extends StatelessWidget {
                       ),
                     );
                   } catch (e) {
-                    print("Error decoding base64: $e");
                     return const Center(child: Icon(Icons.error));
                   }
                 }
 
-                // 3. LOGIC URL BIASA (Pakai Proxy Django)
-                // Hanya jalan kalau thumbnail BUKAN base64 (misal: http://...)
                 final encodedUrl = Uri.encodeComponent(rawThumbnail);
-
-                // Ingat: Web pakai 127.0.0.1, Emulator pakai 10.0.2.2
                 final proxyUrl =
                     "http://localhost:8000/proxy-image/?url=$encodedUrl";
 
@@ -148,8 +137,6 @@ class NewsDetailPage extends StatelessWidget {
                   proxyUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    // Debugging
-                    print("Gagal load proxy: $proxyUrl");
                     return Container(
                       color: Colors.grey[300],
                       child: const Center(
@@ -162,7 +149,8 @@ class NewsDetailPage extends StatelessWidget {
             ),
 
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              // --- UPDATE DI SINI: Memberi jarak horizontal lebih (24.0) ---
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -201,7 +189,7 @@ class NewsDetailPage extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          "by ${authorValues.reverse[news.author] ?? 'Unknown'}",
+                          "by ${news.author ?? 'Unknown'}",
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[700],
@@ -228,79 +216,78 @@ class NewsDetailPage extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // --- BUTTONS ---
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      // Edit Button
-                      ElevatedButton.icon(
-                        icon: const Icon(
-                          Icons.edit,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: const Text(
-                          "Edit",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo,
-                        ),
-                        onPressed: () async {
-                          // Tunggu user selesai edit di halaman EditNewsPage
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => EditNewsPage(news: news),
-                            ),
-                          );
-
-                          // Jika user menekan tombol Save (mengirim result true),
-                          // Maka kita refresh paksa ke halaman List
-                          if (context.mounted && result == true) {
-                            Navigator.pushReplacement(
+                  // --- BUTTONS (HANYA MUNCUL JIKA isOwner TRUE) ---
+                  if (isOwner) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Edit Button
+                        ElevatedButton.icon(
+                          icon: const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            "Edit",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF3BC3FD),
+                          ),
+                          onPressed: () async {
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const NewsEntryListPage(),
+                                builder: (_) => EditNewsPage(news: news),
                               ),
                             );
-                          }
-                        },
-                      ),
 
-                      // Delete Button
-                      ElevatedButton.icon(
-                        icon: const Icon(
-                          Icons.delete,
-                          color: Colors.white,
-                          size: 18,
+                            if (context.mounted && result == true) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NewsEntryListPage(),
+                                ),
+                              );
+                            }
+                          },
                         ),
-                        label: const Text(
-                          "Delete",
-                          style: TextStyle(color: Colors.white),
+
+                        // Delete Button
+                        ElevatedButton.icon(
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            "Delete",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          onPressed: () => _confirmDelete(context, news.id),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        onPressed: () => _confirmDelete(context, news.id),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                  ],
 
-                      const SizedBox(height: 32),
+                  // --- SEPARATOR LINE ---
+                  const Divider(
+                    thickness: 1,
+                    color: Colors.grey,
+                  ),
 
-                      // --- SEPARATOR LINE ---
-                      const Divider(
-                        thickness: 1,
-                        color: Colors.grey,
-                      ),
+                  const SizedBox(height: 16),
 
-                      const SizedBox(height: 16),
-
-                      // --- COMMENT SECTION ---
-                      CommentWidget(
-                        newsId: news.id,
-                        baseUrl: 'http://localhost:8000', // Sesuaikan dengan backend URL kamu
-                      ),
-                    ],
+                  // --- COMMENT SECTION ---
+                  CommentWidget(
+                    newsId: news.id,
+                    baseUrl: 'http://localhost:8000', 
                   ),
                 ],
               ),
