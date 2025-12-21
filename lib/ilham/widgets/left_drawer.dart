@@ -212,7 +212,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const CommentTestScreen(),
+                  builder: (context) => const TestCommentPage(),
                 ),
               );
             },
