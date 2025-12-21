@@ -80,7 +80,7 @@ Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada ko
 ## 🌐 Tautan APK & Design
 
 - PARAWORLD [![Build Status](https://app.bitrise.io/app/d688ddf3-7cf2-4a80-a3d4-4d4a58b392da/status.svg?token=tfHoacHudyeeNWjK3nPGhQ&branch=master)](https://app.bitrise.io/app/d688ddf3-7cf2-4a80-a3d4-4d4a58b392da)
-- **Link Download APK**: https://app.bitrise.io/app/d688ddf3-7cf2-4a80-a3d4-4d4a58b392da/installable-artifacts/650b713f1bc5aeba/public-install-page/368d935d5a2e2a7a3fa241b3ce53b24e
+- **Link Download APK**: https://app.bitrise.io/app/d688ddf3-7cf2-4a80-a3d4-4d4a58b392da/installable-artifacts/743dcc717c677262/public-install-page/7f46b28b7417c0bd7c73ff7da2ac42cb
 - **Link Design (Figma)**: https://www.figma.com/design/yqei3c8chnYDVT8bl7F4dD/Design-Web-A1?node-id=28-3&t=T5QoflADc6s3ku5s-1
 
 --
