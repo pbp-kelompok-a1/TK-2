@@ -201,7 +201,7 @@ class NewsDetailPage extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          "by ${authorValues.reverse[news.author] ?? 'Unknown'}",
+                          "by ${news.author ?? 'Unknown'}",
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[700],
@@ -285,22 +285,22 @@ class NewsDetailPage extends StatelessWidget {
                         onPressed: () => _confirmDelete(context, news.id),
                       ),
 
-                      const SizedBox(height: 32),
-
-                      // --- SEPARATOR LINE ---
-                      const Divider(
-                        thickness: 1,
-                        color: Colors.grey,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // --- COMMENT SECTION ---
-                      CommentWidget(
-                        newsId: news.id,
-                        baseUrl: 'http://localhost:8000', // Sesuaikan dengan backend URL kamu
-                      ),
                     ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // --- SEPARATOR LINE ---
+                  const Divider(
+                    thickness: 1,
+                    color: Colors.grey,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // --- COMMENT SECTION ---
+                  CommentWidget(
+                    newsId: news.id,
+                    baseUrl: 'http://localhost:8000', 
                   ),
                 ],
               ),

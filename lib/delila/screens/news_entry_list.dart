@@ -16,37 +16,20 @@ class NewsEntryListPage extends StatefulWidget {
 
 class _NewsEntryListPageState extends State<NewsEntryListPage> {
   Future<List<NewsEntry>> fetchNews(CookieRequest request) async {
-  try {
+  
       // URL tetap localhost sesuai request
       final response = await request.get('http://localhost:8000/news/json/');
-          
-      print('🔍 Response type: ${response.runtimeType}');
-      print('🔍 Response length: ${response.length}');
       
-      
-
       var data = response;
       List<NewsEntry> listNews = [];
       for (int i = 0; i < data.length; i++) {
         var d = data[i];
         if (d != null) {
-          try {
             listNews.add(NewsEntry.fromJson(d));
-          } catch (e) {
-            print('❌ Error parsing item $i: $e');
-            print('❌ Problematic item: $d');
-            // Skip item yang error
-          }
         }
       }
-      print('✅ Successfully parsed ${listNews.length} news items');
       return listNews;
-  } catch (e, stackTrace) {
-    print('❌ Fetch error: $e');
-    print('❌ StackTrace: $stackTrace');
-    rethrow;
-    }
-  }
+  } 
 
   @override
   Widget build(BuildContext context) {

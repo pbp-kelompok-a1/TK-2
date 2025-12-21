@@ -383,16 +383,18 @@ class _CommentWidgetState extends State<CommentWidget> {
   }
 
   Widget _buildCommentsList() {
-    return ListView.separated(
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: comments.length,
-      separatorBuilder: (_, __) => const Divider(height: 32),
       itemBuilder: (context, index) {
         final comment = comments[index];
         final isEditing = editingCommentId == comment.id;
 
-        return _buildCommentItem(comment, isEditing);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 24), 
+          child: _buildCommentItem(comment, isEditing),
+        );
       },
     );
   }
@@ -424,7 +426,7 @@ class _CommentWidgetState extends State<CommentWidget> {
               ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 2),
 
         // Comment content or edit field
         if (isEditing)
@@ -477,7 +479,7 @@ class _CommentWidgetState extends State<CommentWidget> {
 
         // Action buttons
         if (!isEditing && (comment.isOwner || comment.canDelete)) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 5),
           Wrap(
             spacing: 12,
             children: [
