@@ -203,19 +203,6 @@ class _LeftDrawerState extends State<LeftDrawer> {
               },
             ),
           ],
-          ListTile(
-            leading: const Icon(Icons.comment_outlined),
-            title: const Text('test comment'),
-            onTap: () {
-              // TODO
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TestCommentPage(),
-                ),
-              );
-            },
-          ),
         ],
       ),
     );
