@@ -82,9 +82,7 @@ class NewsDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 3. LOGIKA PENGECEKAN AUTHOR
-    // Kita ambil string nama author dari enum/model
-    String authorName = authorValues.reverse[news.author] ?? 'Unknown';
+    String authorName = news.author; 
     
     // Cek apakah user yang login sama dengan pembuat berita
     bool isOwner = currentUsername == authorName;
