@@ -291,7 +291,7 @@ class _HoverableNewsCardState extends State<_HoverableNewsCard> {
       }
       final encodedUrl = Uri.encodeComponent(rawThumbnail);
       return Image.network(
-        "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/proxy-image/?url=$encodedUrl",
+        "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/proxy-image/?url=$encodedUrl",
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
       );
