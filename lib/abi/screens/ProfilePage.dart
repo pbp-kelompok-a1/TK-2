@@ -81,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       final response = await request.get(
-        'http://localhost:8000/following/profile2/',
+        'https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/following/profile2/',
       );
 
       print('DEBUG: Profile Response: $response');

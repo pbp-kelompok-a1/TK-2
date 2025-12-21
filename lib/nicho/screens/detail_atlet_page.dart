@@ -15,7 +15,8 @@ class DetailAtletPage extends StatefulWidget {
 }
 
 class _DetailAtletPageState extends State<DetailAtletPage> {
-  final String baseUrl = "http://127.0.0.1:8000/atlet/json-detail/";
+  final String baseUrl =
+      "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/json-detail/";
 
   Future<Map<String, dynamic>> fetchDetail(CookieRequest request) async {
     final response = await request.get("$baseUrl${widget.id}/");
@@ -26,7 +27,7 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
   Future<void> deleteMedal(int medalId) async {
     final request = context.read<CookieRequest>();
     final response = await request.post(
-      "http://127.0.0.1:8000/atlet/delete-medali-flutter/$medalId/",
+      "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/delete-medali-flutter/$medalId/",
       {},
     );
     if (response['status'] == 'success') {
@@ -100,7 +101,7 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
               onPressed: () async {
                 final request = context.read<CookieRequest>();
                 final response = await request.post(
-                  "http://127.0.0.1:8000/atlet/edit-medali-flutter/${medali['pk']}/",
+                  "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/edit-medali-flutter/${medali['pk']}/",
                   jsonEncode({
                     "medal_type": selectedType,
                     "event": eventController.text,
@@ -148,7 +149,7 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
   Future<void> addMedal(String type, String event, String date) async {
     final request = context.read<CookieRequest>();
     final response = await request.post(
-      "http://127.0.0.1:8000/atlet/add-medali-flutter/${widget.id}/",
+      "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/add-medali-flutter/${widget.id}/",
       jsonEncode({"medal_type": type, "event": event, "medal_date": date}),
     );
     if (response['status'] == 'success') {
