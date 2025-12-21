@@ -131,7 +131,7 @@ class NewsDetailPage extends StatelessWidget {
 
                 final encodedUrl = Uri.encodeComponent(rawThumbnail);
                 final proxyUrl =
-                    "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/proxy-image/?url=$encodedUrl";
+                    "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/proxy-image/?url=$encodedUrl";
 
                 return Image.network(
                   proxyUrl,
