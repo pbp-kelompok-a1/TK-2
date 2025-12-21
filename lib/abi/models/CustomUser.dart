@@ -1,57 +1,57 @@
 import 'dart:convert';
 
-CustomUser customUserFromJson(String str) => CustomUser.fromJson(json.decode(str));
+CustomUser userFromJson(String str) => CustomUser.fromJson(json.decode(str));
 
-String customUserToJson(CustomUser data) => json.encode(data.toJson());
+String userToJson(CustomUser data) => json.encode(data.toJson());
 
 class CustomUser {
-  List<CustomUserElement> customUser;
+  List<User> users;
 
   CustomUser({
-    required this.customUser,
+    required this.users,
   });
 
   factory CustomUser.fromJson(Map<String, dynamic> json) => CustomUser(
-    customUser: List<CustomUserElement>.from(json["customUser"].map((x) => CustomUserElement.fromJson(x))),
+    users: List<User>.from(json["users"].map((x) => User.fromJson(x))),
   );
 
   Map<String, dynamic> toJson() => {
-    "customUser": List<dynamic>.from(customUser.map((x) => x.toJson())),
+    "users": List<dynamic>.from(users.map((x) => x.toJson())),
   };
 }
 
-class CustomUserElement {
-  String uuid;
-  int user;
-  DateTime joinDate;
+class User {
+  int userId;
+  String userUuid;
   String username;
   String name;
-  dynamic picture;
+  String? picture;
+  DateTime joinDate;
 
-  CustomUserElement({
-    required this.uuid,
-    required this.user,
-    required this.joinDate,
+  User({
+    required this.userId,
+    required this.userUuid,
     required this.username,
     required this.name,
     required this.picture,
+    required this.joinDate,
   });
 
-  factory CustomUserElement.fromJson(Map<String, dynamic> json) => CustomUserElement(
-    uuid: json["uuid"],
-    user: json["user"],
-    joinDate: DateTime.parse(json["join_date"]),
+  factory User.fromJson(Map<String, dynamic> json) => User(
+    userId: json["user_id"],
+    userUuid: json["user_uuid"],
     username: json["username"],
     name: json["name"],
     picture: json["picture"],
+    joinDate: DateTime.parse(json["join_date"]),
   );
 
   Map<String, dynamic> toJson() => {
-    "uuid": uuid,
-    "user": user,
-    "join_date": joinDate.toIso8601String(),
+    "user_id": userId,
+    "user_uuid": userUuid,
     "username": username,
     "name": name,
     "picture": picture,
+    "join_date": joinDate.toIso8601String(),
   };
 }
