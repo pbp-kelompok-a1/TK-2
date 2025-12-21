@@ -91,6 +91,9 @@ Di ParaWorld, pengguna dapat membaca berita terkini, memberikan komentar pada ko
 
 --
 
+## Video Promosi
+
+- https://drive.google.com/drive/folders/17fbOdWcb2AZBSnRQObegiT5OKp7MFGbn
 
 
 
