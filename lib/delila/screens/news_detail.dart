@@ -300,7 +300,7 @@ class NewsDetailPage extends StatelessWidget {
                   // --- COMMENT SECTION ---
                   CommentWidget(
                     newsId: news.id,
-                    baseUrl: 'http://localhost:8000', // Sesuaikan dengan backend URL kamu
+                    baseUrl: 'http://localhost:8000', 
                   ),
                 ],
               ),
