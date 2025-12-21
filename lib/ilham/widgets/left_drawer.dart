@@ -31,7 +31,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
     if (!request.loggedIn) return;
 
     try {
-      final response = await request.get('http://localhost:8000/following/profile2/');
+      final response = await request.get('https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/following/profile2/');
 
       if (!mounted) return;
 
@@ -169,7 +169,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
                 await Provider.of<CookieRequest>(
                   context,
                   listen: false,
-                ).logout("http://localhost:8000/auth/logout/");
+                ).logout("https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/auth/logout/");
 
                 if (!context.mounted) return;
 
