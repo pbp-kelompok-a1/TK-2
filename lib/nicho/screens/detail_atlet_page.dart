@@ -21,6 +21,98 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
     return response;
   }
 
+  // 1. Fungsi hapus medali
+  Future<void> deleteMedal(int medalId) async {
+    final request = context.read<CookieRequest>();
+    final response = await request.post(
+      "http://127.0.0.1:8000/profil_atlet/delete-medali-flutter/$medalId/",
+      {},
+    );
+    if (response['status'] == 'success') {
+      setState(() {}); // Refresh UI
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Medal deleted")));
+    }
+  }
+
+  // 2. Pop up form edit
+  void showEditDialog(Map<String, dynamic> medali) {
+    TextEditingController typeController = TextEditingController(
+      text: medali['medal_type'],
+    );
+    TextEditingController eventController = TextEditingController(
+      text: medali['event'],
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Edit Medal"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: typeController,
+              decoration: const InputDecoration(labelText: "Medal Type"),
+            ),
+            TextField(
+              controller: eventController,
+              decoration: const InputDecoration(labelText: "Event"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final request = context.read<CookieRequest>();
+              final response = await request.post(
+                "http://127.0.0.1:8000/profil_atlet/edit-medali-flutter/${medali['pk']}/",
+                {
+                  "medal_type": typeController.text,
+                  "event": eventController.text,
+                },
+              );
+              if (response['status'] == 'success') {
+                Navigator.pop(context);
+                setState(() {}); // Refresh data
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. Pop up konfirmasi hapus
+  void showDeleteConfirm(int medalId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete?"),
+        content: const Text("Are you sure you want to delete this medal?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              deleteMedal(medalId);
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
@@ -159,13 +251,19 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
                                               buildActionBtn(
                                                 "Edit",
                                                 Colors.amber,
-                                                () {},
+                                                () {
+                                                  showEditDialog(medali);
+                                                },
                                               ),
                                               const SizedBox(width: 5),
                                               buildActionBtn(
                                                 "Delete",
                                                 Colors.red,
-                                                () {},
+                                                () {
+                                                  showDeleteConfirm(
+                                                    medali['pk'],
+                                                  );
+                                                },
                                               ),
                                             ],
                                           ),
