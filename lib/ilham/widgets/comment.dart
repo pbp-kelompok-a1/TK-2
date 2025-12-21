@@ -7,7 +7,6 @@ import 'package:tk2/ilham/models/comment_model.dart';
 class CommentWidget extends StatefulWidget {
   final int newsId;
   final String baseUrl; 
-
   const CommentWidget({
     Key? key,
     required this.newsId,
