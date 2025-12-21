@@ -191,7 +191,7 @@ class NewsDetailPage extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          "by $authorName", // Pakai variabel authorName yg di atas
+                          "by ${news.author ?? 'Unknown'}",
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[700],
@@ -289,7 +289,7 @@ class NewsDetailPage extends StatelessWidget {
                   // --- COMMENT SECTION ---
                   CommentWidget(
                     newsId: news.id,
-                    baseUrl: 'http://localhost:8000',
+                    baseUrl: 'http://localhost:8000', 
                   ),
                 ],
               ),
