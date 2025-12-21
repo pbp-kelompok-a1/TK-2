@@ -219,8 +219,21 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
                       color: Color(0xFF2C3E50),
                     ),
                   ),
+                  // Tampilkan short name di bawah nama
+                  if (data['short_name'] != "-")
+                    Text(
+                      "${data['short_name']}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
+                    ),
+
+                  const SizedBox(height: 8),
+                  // Subtitle: Cabor | Negara yang dibela
                   Text(
-                    "(${data['discipline']} | ${data['nationality']})",
+                    "(${data['discipline']} | ${data['country']})",
                     style: const TextStyle(
                       fontSize: 18,
                       color: Colors.blueGrey,
@@ -236,6 +249,11 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
                     ),
                     child: Column(
                       children: [
+                        buildInfoRow("Short Name", data['short_name'] ?? "-"),
+                        buildInfoRow(
+                          "Representing/Country",
+                          data['country'] ?? "-",
+                        ),
                         buildInfoRow("Nationality", data['nationality'] ?? "-"),
                         buildInfoRow("Gender", data['gender'] ?? "-"),
                         buildInfoRow("Birth Date", data['birth_date'] ?? "-"),
