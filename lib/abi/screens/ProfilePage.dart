@@ -59,14 +59,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String? _getValidImageUrl(String? path) {
-    if (path == null || path.isEmpty) return null;
-    if (path.startsWith('http')) return path;
-
-    const String baseUrl = 'http://localhost:8000';
-    if (path.startsWith('/')) {
-      return '$baseUrl$path';
+    if (path == null || path.isEmpty) {
+      return null;
     }
-    return '$baseUrl/$path';
+
+    if (path.startsWith('http')) {
+      return path;
+    }
+
+    if (path.startsWith('/')) {
+      return 'https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id$path';
+    }
+
+    return 'https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/$path';
   }
 
   Future<void> _loadProfileData() async {
@@ -175,7 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       final response = await request.post(
-        'http://localhost:8000/following/profile2/',
+        'https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/following/profile2/',
         formData,
       );
 
@@ -242,7 +247,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       final response = await request.post(
-        'http://localhost:8000/following/profile2/',
+        'https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/following/profile2/',
         {'cabangOlahraga': sportId},
       );
 
@@ -295,7 +300,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       final response = await request.post(
-        'http://localhost:8000/following/unfollow2/$followId/',
+        'https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/following/unfollow2/$followId/',
         {},
       );
 
@@ -776,7 +781,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: ElevatedButton(
                 onPressed: () async {
                   final request = context.read<CookieRequest>();
-                  await request.logout('http://localhost:8000/auth/logout/');
+                  await request.logout('https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/auth/logout/');
 
                   if (mounted) {
                     Navigator.of(context).pushNamedAndRemoveUntil(
