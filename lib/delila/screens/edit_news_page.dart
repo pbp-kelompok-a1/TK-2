@@ -157,7 +157,7 @@ class _EditNewsPageState extends State<EditNewsPage> {
                       if (_formKey.currentState!.validate()) {
                         final response = await request.postJson(
                           // Pastikan URL ini benar
-                          "http://localhost:8000/news/edit-flutter/${widget.news.id}/",
+                          "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/edit-flutter/${widget.news.id}/",
                           jsonEncode({
                             "title": _title,
                             "content": _content,

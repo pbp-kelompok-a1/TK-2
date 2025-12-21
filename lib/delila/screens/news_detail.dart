@@ -47,7 +47,7 @@ class NewsDetailPage extends StatelessWidget {
                 Navigator.pop(context); 
 
                 final response = await request.postJson(
-                  "http://localhost:8000/news/delete-flutter/$newsId/",
+                  "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/delete-flutter/$newsId/",
                   "{}",
                 );
 
@@ -131,7 +131,7 @@ class NewsDetailPage extends StatelessWidget {
 
                 final encodedUrl = Uri.encodeComponent(rawThumbnail);
                 final proxyUrl =
-                    "http://localhost:8000/proxy-image/?url=$encodedUrl";
+                    "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/proxy-image/?url=$encodedUrl";
 
                 return Image.network(
                   proxyUrl,
@@ -287,7 +287,7 @@ class NewsDetailPage extends StatelessWidget {
                   // --- COMMENT SECTION ---
                   CommentWidget(
                     newsId: news.id,
-                    baseUrl: 'http://localhost:8000', 
+                    baseUrl: 'https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id', 
                   ),
                 ],
               ),

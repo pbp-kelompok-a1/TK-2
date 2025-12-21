@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:tk2/ilham/models/comment_model.dart'; 
+import 'package:tk2/ilham/screens/login.dart';
 
 // Main Comment Widget
 class CommentWidget extends StatefulWidget {
@@ -21,6 +22,7 @@ class _CommentWidgetState extends State<CommentWidget> {
   List<CommentModel> comments = [];
   bool isLoading = true;
   bool showCommentInput = false;
+  bool showMyCommentsOnly = false;  
   final TextEditingController _commentController = TextEditingController();
   int? editingCommentId;
 
@@ -34,6 +36,14 @@ class _CommentWidgetState extends State<CommentWidget> {
   void dispose() {
     _commentController.dispose();
     super.dispose();
+  }
+
+  
+  List<CommentModel> get filteredComments {
+    if (showMyCommentsOnly) {
+      return comments.where((comment) => comment.isOwner).toList();
+    }
+    return comments;
   }
 
   // GET request ke Django untuk load comments
@@ -92,7 +102,7 @@ class _CommentWidgetState extends State<CommentWidget> {
           );
         }
         
-        await loadComments(); // Reload comments
+        await loadComments();
       } else {
         throw Exception(response['error'] ?? 'Failed to add comment');
       }
@@ -212,9 +222,8 @@ class _CommentWidgetState extends State<CommentWidget> {
             _buildLoginPrompt(),
 
           const SizedBox(height: 24),
-
-          // Comments Header
-          _buildCommentsHeader(),
+          
+          _buildCommentsHeader(isAuthenticated),
 
           const SizedBox(height: 24),
 
@@ -226,8 +235,8 @@ class _CommentWidgetState extends State<CommentWidget> {
                 child: CircularProgressIndicator(),
               ),
             )
-          else if (comments.isEmpty)
-            _buildEmptyState()
+          else if (filteredComments.isEmpty)
+            _buildEmptyState(showMyCommentsOnly)
           else
             _buildCommentsList(),
         ],
@@ -315,66 +324,125 @@ class _CommentWidgetState extends State<CommentWidget> {
 
   Widget _buildLoginPrompt() {
     return Center(
-      child: GestureDetector(
-        onTap: () {
-          // TODO: Navigate to login page
-        },
-        child: RichText(
-          text: const TextSpan(
+      child: Column(
+        children: [
+          const Text(
+            'Login to add a comment',
             style: TextStyle(color: Colors.grey, fontSize: 14),
-            children: [
-              TextSpan(text: 'Login to add a comment'),
-            ],
           ),
-        ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              ); 
+            },
+            icon: const Icon(Icons.login, size: 18),
+            label: const Text('Login'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF38BDF8),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCommentsHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildCommentsHeader(bool isAuthenticated) {
+    return Column(
       children: [
-        const Icon(Icons.comment, size: 24),
-        const SizedBox(width: 8),
-        const Text(
-          'Comments',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.comment, size: 24),
+            const SizedBox(width: 8),
+            const Text(
+              'Comments',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF38BDF8),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${comments.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFF38BDF8),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            '${comments.length}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+        
+        if (isAuthenticated) ...[
+          const SizedBox(height: 12),
+          InkWell(
+            onTap: () {
+              setState(() {
+                showMyCommentsOnly = !showMyCommentsOnly;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: showMyCommentsOnly 
+                  ? const Color(0xFF38BDF8) 
+                  : Colors.grey[200],
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    showMyCommentsOnly ? Icons.check_circle : Icons.filter_list,
+                    size: 16,
+                    color: showMyCommentsOnly ? Colors.white : Colors.grey[700],
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'My Comments Only',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: showMyCommentsOnly ? Colors.white : Colors.grey[700],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isFiltered) {
     return Center(
       child: Column(
         children: [
           const SizedBox(height: 40),
           Icon(Icons.comment_outlined, size: 96, color: Colors.grey[400]),
           const SizedBox(height: 12),
-          const Text(
-            'No comments yet',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey),
+          Text(
+            isFiltered ? 'You have no comments yet' : 'No comments yet',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey),
           ),
           const SizedBox(height: 4),
           Text(
-            'Be the first to share your thoughts!',
+            isFiltered 
+              ? 'Add a comment to see it here!'
+              : 'Be the first to share your thoughts!',
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
         ],
@@ -386,9 +454,9 @@ class _CommentWidgetState extends State<CommentWidget> {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: comments.length,
+      itemCount: filteredComments.length,
       itemBuilder: (context, index) {
-        final comment = comments[index];
+        final comment = filteredComments[index];
         final isEditing = editingCommentId == comment.id;
 
         return Padding(
@@ -426,7 +494,7 @@ class _CommentWidgetState extends State<CommentWidget> {
               ),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
 
         // Comment content or edit field
         if (isEditing)
@@ -479,7 +547,7 @@ class _CommentWidgetState extends State<CommentWidget> {
 
         // Action buttons
         if (!isEditing && (comment.isOwner || comment.canDelete)) ...[
-          const SizedBox(height: 5),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 12,
             children: [
