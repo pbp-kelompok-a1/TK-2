@@ -37,7 +37,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
 
       if (response != null && response['success'] == true) {
         setState(() {
-          _name = response['name'] ?? "User Placeholder";
+          _name = response['name'] ?? "Guest";
           _profilePictureUrl = response['profilePicture'];
         });
       }
