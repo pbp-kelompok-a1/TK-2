@@ -6,7 +6,7 @@ import 'package:tk2/nicho/models/atlet.dart';
 import 'package:tk2/nicho/screens/atlet_page.dart';
 
 class AtletFormPage extends StatefulWidget {
-  final AtletList? atlet; // Kalau null = mode Create, kalau ada isi = mode Edit
+  final AtletList? atlet;
 
   const AtletFormPage({Key? key, this.atlet}) : super(key: key);
 
@@ -17,20 +17,59 @@ class AtletFormPage extends StatefulWidget {
 class _AtletFormPageState extends State<AtletFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Variabel utk menyimpan input user
-  String _name = "";
-  String _country = "";
-  String _discipline = "Swimming"; // Default awal
+  late TextEditingController _nameController;
+  late TextEditingController _shortNameController;
+  late TextEditingController _countryController;
+  late TextEditingController _disciplineController;
+  late TextEditingController _birthPlaceController;
+  late TextEditingController _birthCountryController;
+  late TextEditingController _nationalityController;
+  late TextEditingController _birthDateController;
+
+  String _gender = "Male";
 
   @override
   void initState() {
     super.initState();
-    // Jika mode edit (dmn widget.atlet tidak null), isi form dengan data lama
-    if (widget.atlet != null) {
-      _name = widget.atlet!.name;
-      _country = widget.atlet!.country;
-      _discipline = widget.atlet!.discipline;
+    _nameController = TextEditingController(text: widget.atlet?.name ?? "");
+    _shortNameController = TextEditingController(
+      text: widget.atlet?.shortName ?? "",
+    );
+    _countryController = TextEditingController(
+      text: widget.atlet?.country ?? "",
+    );
+    _disciplineController = TextEditingController(
+      text: widget.atlet?.discipline ?? "Swimming",
+    );
+    _birthPlaceController = TextEditingController(
+      text: widget.atlet?.birthPlace ?? "",
+    );
+    _birthCountryController = TextEditingController(
+      text: widget.atlet?.birthCountry ?? "",
+    );
+    _nationalityController = TextEditingController(
+      text: widget.atlet?.nationality ?? "",
+    );
+    _birthDateController = TextEditingController(
+      text: widget.atlet?.birthDate ?? "",
+    );
+
+    if (widget.atlet?.gender != null) {
+      _gender = widget.atlet!.gender!;
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _shortNameController.dispose();
+    _countryController.dispose();
+    _disciplineController.dispose();
+    _birthPlaceController.dispose();
+    _birthCountryController.dispose();
+    _nationalityController.dispose();
+    _birthDateController.dispose();
+    super.dispose();
   }
 
   @override
@@ -39,86 +78,102 @@ class _AtletFormPageState extends State<AtletFormPage> {
     final isEdit = widget.atlet != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? "Edit Athlete" : "Add New Athlete")),
+      appBar: AppBar(
+        title: Text(isEdit ? "Edit Athlete" : "Add New Athlete"),
+        backgroundColor: const Color(0xFF3BC3FD),
+      ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Input Nama
-              TextFormField(
-                initialValue: _name,
+              const Text(
+                "Basic Information",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              buildTextField("Full Name", _nameController, Icons.person),
+              buildTextField(
+                "Short Name (Optional)",
+                _shortNameController,
+                Icons.badge,
+              ),
+              buildTextField("Discipline", _disciplineController, Icons.sports),
+              buildTextField("Country", _countryController, Icons.flag),
+
+              const SizedBox(height: 10),
+              const Text(
+                "Personal Details",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+
+              // Dropdown gender
+              DropdownButtonFormField<String>(
+                initialValue: _gender,
                 decoration: const InputDecoration(
-                  labelText: "Name",
+                  labelText: "Gender",
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icon(Icons.wc),
                 ),
-                onChanged: (String? value) {
-                  setState(() {
-                    _name = value!;
-                  });
-                },
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return "Name cannot be empty!";
+                items: ["Male", "Female"].map((String value) {
+                  return DropdownMenuItem(value: value, child: Text(value));
+                }).toList(),
+                onChanged: (val) => setState(() => _gender = val!),
+              ),
+              const SizedBox(height: 12),
+
+              // Input birth date
+              TextFormField(
+                controller: _birthDateController,
+                decoration: const InputDecoration(
+                  labelText: "Birth Date (e.g. 1990-10-16)",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.calendar_today),
+                ),
+                onTap: () async {
+                  // Memunculkan kalender
+                  FocusScope.of(context).requestFocus(FocusNode());
+                  DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime(1995),
+                    firstDate: DateTime(1950),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _birthDateController.text = picked.toString().split(
+                        ' ',
+                      )[0]; // Ambil YYYY-MM-DD
+                    });
                   }
-                  return null;
                 },
               ),
               const SizedBox(height: 12),
 
-              // Input Negara
-              TextFormField(
-                initialValue: _country,
-                decoration: const InputDecoration(
-                  labelText: "Country",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.flag),
-                ),
-                onChanged: (String? value) {
-                  setState(() {
-                    _country = value!;
-                  });
-                },
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return "Country cannot be empty!";
-                  }
-                  return null;
-                },
+              buildTextField(
+                "Birth Place",
+                _birthPlaceController,
+                Icons.location_city,
               ),
-              const SizedBox(height: 12),
+              buildTextField(
+                "Birth Country",
+                _birthCountryController,
+                Icons.public,
+              ),
+              buildTextField(
+                "Nationality",
+                _nationalityController,
+                Icons.language,
+              ),
 
-              // Input Discipline (Cabang Olahraga)
-              TextFormField(
-                initialValue: _discipline,
-                decoration: const InputDecoration(
-                  labelText: "Discipline",
-                  hintText: "e.g. Swimming, Archery",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.sports_handball),
-                ),
-                onChanged: (String? value) {
-                  setState(() {
-                    _discipline = value!;
-                  });
-                },
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return "Discipline cannot be empty!";
-                  }
-                  return null;
-                },
-              ),
               const SizedBox(height: 24),
-
-              // Tombol Simpan
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                   minimumSize: const Size.fromHeight(50),
                 ),
                 onPressed: () async {
@@ -127,13 +182,18 @@ class _AtletFormPageState extends State<AtletFormPage> {
                         ? "http://127.0.0.1:8000/atlet/edit-flutter/${widget.atlet!.pk}/"
                         : "http://127.0.0.1:8000/atlet/create-flutter/";
 
-                    // Kirim JSON
                     final response = await request.postJson(
                       url,
-                      jsonEncode(<String, String>{
-                        'name': _name,
-                        'country': _country,
-                        'discipline': _discipline,
+                      jsonEncode({
+                        'name': _nameController.text,
+                        'short_name': _shortNameController.text,
+                        'discipline': _disciplineController.text,
+                        'country': _countryController.text,
+                        'gender': _gender,
+                        'birth_date': _birthDateController.text,
+                        'birth_place': _birthPlaceController.text,
+                        'birth_country': _birthCountryController.text,
+                        'nationality': _nationalityController.text,
                       }),
                     );
 
@@ -144,35 +204,50 @@ class _AtletFormPageState extends State<AtletFormPage> {
                             content: Text("Data saved successfully!"),
                           ),
                         );
-                        // Balik ke list dan refresh
-                        // Menggunakan pushReplacement bukan pop() agar halaman list terganti dengan yang baru
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const AtletPage(),
                           ),
                         );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Error: ${response['message']}"),
-                          ),
-                        );
                       }
                     }
                   }
                 },
-                child: Text(
-                  "Save",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: const Text(
+                  "SAVE ATHLETE",
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Widget helper
+  Widget buildTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          prefixIcon: Icon(icon),
+        ),
+        validator: (value) {
+          if (label != "Short Name (Optional)" &&
+              (value == null || value.isEmpty)) {
+            return "$label cannot be empty!";
+          }
+          return null;
+        },
       ),
     );
   }
