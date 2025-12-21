@@ -32,20 +32,23 @@ class _EventPageState extends State<EventPage> {
   }
 
   Future<List<Events>> fetchEvents(CookieRequest request) async {
-    final response = await request.get('http://127.0.0.1:8000/events/json/');
+    try {
+      final response = await request.get('http://localhost:8000/events/json/');
+      print("RAW DATA FROM DJANGO: $response");
 
-    var data = response;
+      if (response is! List) return [];
 
-    List<Events> listEvents = [];
-    for (var d in data) {
-      if (d != null) {
+      List<Events> listEvents = [];
+      for (var d in response) {
         listEvents.add(Events.fromJson(d));
       }
+      print("PARSED EVENTS COUNT: ${listEvents.length}");
+      return listEvents;
+    } catch (e) {
+      print("PARSING ERROR: $e");
+      return [];
     }
-
-    return listEvents;
   }
-
 
   Future<void> _handleDelete(String eventId) async {
     final request = context.read<CookieRequest>();
@@ -75,7 +78,7 @@ class _EventPageState extends State<EventPage> {
 
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
+    final request = context.read<CookieRequest>();
 
     final int currentUserId =
     (request.jsonData != null && request.jsonData.containsKey('user_id'))
