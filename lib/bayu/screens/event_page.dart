@@ -33,7 +33,7 @@ class _EventPageState extends State<EventPage> {
 
   Future<List<Events>> fetchEvents(CookieRequest request) async {
     try {
-      final response = await request.get('http://localhost:8000/events/json/');
+      final response = await request.get('https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/events/json/');
       print("RAW DATA FROM DJANGO: $response");
 
       if (response is! List) return [];
@@ -57,7 +57,7 @@ class _EventPageState extends State<EventPage> {
     print("Attempting to delete event: $eventId");
 
     final response = await request.postJson(
-      "http://localhost:8000/events/$eventId/delete-flutter/",
+      "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/events/$eventId/delete-flutter/",
       "{}",
     );
     if (mounted) {
