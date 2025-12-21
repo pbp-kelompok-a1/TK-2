@@ -37,7 +37,7 @@ class _NewsEntryListPageState extends State<NewsEntryListPage> {
   Future<void> _checkUserStatus() async {
     final request = context.read<CookieRequest>();
     try {
-      final response = await request.get('http://localhost:8000/news/get-user-status/'); 
+      final response = await request.get('https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/get-user-status/'); 
       if (mounted) {
         setState(() {
           isAdmin = response['is_staff'] ?? false;
@@ -52,7 +52,7 @@ class _NewsEntryListPageState extends State<NewsEntryListPage> {
   Future<List<NewsEntry>> fetchNews(CookieRequest request) async {
   
       // URL tetap localhost sesuai request
-      final response = await request.get('http://localhost:8000/news/json/');
+      final response = await request.get('https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/json/');
       
       var data = response;
       List<NewsEntry> listNews = [];
@@ -291,7 +291,7 @@ class _HoverableNewsCardState extends State<_HoverableNewsCard> {
       }
       final encodedUrl = Uri.encodeComponent(rawThumbnail);
       return Image.network(
-        "http://localhost:8000/proxy-image/?url=$encodedUrl",
+        "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/proxy-image/?url=$encodedUrl",
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
       );

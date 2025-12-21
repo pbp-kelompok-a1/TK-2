@@ -19,7 +19,7 @@ class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
 
   Future<List<AtletList>> fetchAtlet(CookieRequest request) async {
-    final response = await request.get("http://127.0.0.1:8000/atlet/json/");
+    final response = await request.get("https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/json/");
     List<AtletList> listAtlet = [];
     for (var d in response) {
       if (d != null) {
@@ -30,7 +30,7 @@ class MyHomePage extends StatelessWidget {
   }
 
   Future<List<NewsEntry>> fetchNews(CookieRequest request) async {
-    final response = await request.get("http://127.0.0.1:8000/news/json/");
+    final response = await request.get("https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/news/json/");
     List<NewsEntry> listNews = [];
     for (var d in response) {
       if (d != null) {
@@ -41,7 +41,7 @@ class MyHomePage extends StatelessWidget {
   }
 
   Future<List<Events>> fetchEvents(CookieRequest request) async {
-    final response = await request.get("http://127.0.0.1:8000/events/json/");
+    final response = await request.get("https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/events/json/");
     List<Events> listEvents = [];
     for (var d in response) {
       if (d != null) {
@@ -584,7 +584,7 @@ class MyHomePage extends StatelessWidget {
 
                   // Logic URL dengan Proxy
                   final encodedUrl = Uri.encodeComponent(rawThumbnail);
-                  final proxyUrl = "http://127.0.0.1:8000/proxy-image/?url=$encodedUrl";
+                  final proxyUrl = "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/proxy-image/?url=$encodedUrl";
 
                   return Image.network(
                     proxyUrl,
