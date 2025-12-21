@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +26,7 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
   Future<void> deleteMedal(int medalId) async {
     final request = context.read<CookieRequest>();
     final response = await request.post(
-      "http://127.0.0.1:8000/profil_atlet/delete-medali-flutter/$medalId/",
+      "http://127.0.0.1:8000/atlet/delete-medali-flutter/$medalId/",
       {},
     );
     if (response['status'] == 'success') {
@@ -71,15 +72,16 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
             onPressed: () async {
               final request = context.read<CookieRequest>();
               final response = await request.post(
-                "http://127.0.0.1:8000/profil_atlet/edit-medali-flutter/${medali['pk']}/",
-                {
+                "http://127.0.0.1:8000/atlet/edit-medali-flutter/${medali['pk']}/",
+                jsonEncode({
                   "medal_type": typeController.text,
                   "event": eventController.text,
-                },
+                  "medal_date": medali['medal_date'],
+                }),
               );
               if (response['status'] == 'success') {
                 Navigator.pop(context);
-                setState(() {}); // Refresh data
+                setState(() {}); // Refresh list medali
               }
             },
             child: const Text("Save"),
@@ -107,6 +109,66 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
               deleteMedal(medalId);
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Fungsi utks kirim data ke Django
+  Future<void> addMedal(String type, String event) async {
+    final request = context.read<CookieRequest>();
+    final response = await request.post(
+      "http://127.0.0.1:8000/atlet/add-medali-flutter/${widget.id}/",
+      jsonEncode({
+        "medal_type": type,
+        "event": event,
+        "medal_date": "2024-01-01",
+      }),
+    );
+    if (response['status'] == 'success') {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("New medal added successfully!")),
+      );
+    }
+  }
+
+  // Fungsi utk menampilkan pop up form
+  void showAddMedalDialog() {
+    TextEditingController typeController = TextEditingController();
+    TextEditingController eventController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Add New Medal"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: typeController,
+              decoration: const InputDecoration(
+                labelText: "Medal Type (Gold/Silver/Bronze)",
+              ),
+            ),
+            TextField(
+              controller: eventController,
+              decoration: const InputDecoration(labelText: "Event Name"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              addMedal(typeController.text, eventController.text);
+            },
+            child: const Text("Add"),
           ),
         ],
       ),
@@ -199,7 +261,7 @@ class _DetailAtletPageState extends State<DetailAtletPage> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // Link ke form tambah medali
+                            showAddMedalDialog();
                           },
                           icon: const Icon(Icons.add),
                           label: const Text("Add New Medal"),
