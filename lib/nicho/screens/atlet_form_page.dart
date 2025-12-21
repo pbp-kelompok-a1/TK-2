@@ -178,8 +178,8 @@ class _AtletFormPageState extends State<AtletFormPage> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final String url = isEdit
-                        ? "http://127.0.0.1:8000/atlet/edit-flutter/${widget.atlet!.pk}/"
-                        : "http://127.0.0.1:8000/atlet/create-flutter/";
+                        ? "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/edit-flutter/${widget.atlet!.pk}/"
+                        : "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/atlet/create-flutter/";
 
                     final response = await request.postJson(
                       url,
