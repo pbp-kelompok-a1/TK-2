@@ -63,7 +63,7 @@ class _EventFormPageState extends State<EventFormPage> {
     final request = context.read<CookieRequest>();
 
     try {
-      final response = await request.get('http://127.0.0.1:8000/following/showJSONCabangOlahraga/');
+      final response = await request.get('https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/following/showJSONCabangOlahraga/');
 
       if (response != null && response['cabangOlahraga'] != null) {
         CabangOlahraga data = CabangOlahraga.fromJson(response);
@@ -281,9 +281,9 @@ class _EventFormPageState extends State<EventFormPage> {
                       _selectedTime.hour, _selectedTime.minute,
                     );
 
-                    String url = "http://localhost:8000/events/create-flutter/";
+                    String url = "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/events/create-flutter/";
                     if (widget.existingEvent != null) {
-                      url = "http://localhost:8000/events/${widget.existingEvent!.id}/edit-flutter/";
+                      url = "https://angelo-benhanan-paraworld.pbp.cs.ui.ac.id/events/${widget.existingEvent!.id}/edit-flutter/";
                     }
 
                     // 2. Kirim ke Django
