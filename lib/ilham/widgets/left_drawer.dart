@@ -16,7 +16,7 @@ class LeftDrawer extends StatefulWidget {
 }
 
 class _LeftDrawerState extends State<LeftDrawer> {
-  String _name = "User Placeholder";
+  String _name = "Guest";
   String? _profilePictureUrl;
 
   @override
